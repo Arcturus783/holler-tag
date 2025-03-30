@@ -1,19 +1,27 @@
-import 'package:myapp/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:myapp/elements/custom_button.dart';
-import 'package:myapp/screens/login.dart';
+import 'package:myapp/screens/old_login.dart';
 import 'package:myapp/elements/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 //import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/elements/image_carousel.dart';
+import 'package:myapp/screens/firebase_login.dart';
 //import 'package:myapp/qr_signup_page.dart';
 
 void main() async {
   //runApp(QrTo3DApp()); //use this to test qr code thing
 
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+  await Firebase.initializeApp(
+      options: const FirebaseOptions(
+    apiKey: "AIzaSyDbpGqdo3YDfpcnoH6UXhDUbK7B7EvbmnY",
+    authDomain: "holler-tag.firebaseapp.com",
+    projectId: "holler-tag",
+    storageBucket: "holler-tag.firebasestorage.app",
+    messagingSenderId: "147037316014",
+    appId: "1:147037316014:web:4f8247a912242943155e3f",
+  ));
   runApp(const MyApp());
 }
 
@@ -59,12 +67,33 @@ class HomePage extends StatefulWidget {
 
 //IMPORTANT
 //vvv  |Write your UI code in this class| vvv
+
 class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     MediaQueryData queryData = MediaQuery.of(context);
-    //double w = queryData.size.width;
-    double h = queryData.size.height;
+    double screenWidth = queryData.size.width;
+    //double screenHeight = queryData.size.height;
+    double desiredAspectRatio = 16 / 9; // Same as in ImageCarousel
+    double carouselHeight = screenWidth / desiredAspectRatio;
+
+    // Base sizes for different screen heights (you can adjust these)
+    double baseTitleFontSize = 25.0;
+    double baseSubtitleFontSize = 15.0;
+    double baseButtonPaddingVertical = 10.0;
+    double baseButtonPaddingHorizontal = 20.0;
+
+    // Calculate scaling factor based on carousel height relative to a base height (e.g., 200)
+    double baseCarouselHeight = 200.0;
+    double scaleFactor = carouselHeight / baseCarouselHeight;
+    if (scaleFactor < 0.8) scaleFactor = 0.8; // Minimum scale
+    if (scaleFactor > 1.2) scaleFactor = 1.2; // Maximum scale
+
+    // Apply scaling to sizes
+    double titleFontSize = baseTitleFontSize * scaleFactor;
+    double subtitleFontSize = baseSubtitleFontSize * scaleFactor;
+    double buttonPaddingVertical = baseButtonPaddingVertical * scaleFactor;
+    double buttonPaddingHorizontal = baseButtonPaddingHorizontal * scaleFactor;
 
     List<String> imageList = [
       'https://9to5toys.com/wp-content/uploads/sites/5/2020/11/macbook-air-202o-m1.jpg',
@@ -81,11 +110,11 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: ThemeData().primaryColor,
+        backgroundColor: Theme.of(context).primaryColor,
         toolbarHeight: 50,
         actions: [
           IconButton(
-            onPressed: widget.toggleTheme, // Use the passed toggle function
+            onPressed: widget.toggleTheme,
             icon: Icon(
               Theme.of(context).brightness == Brightness.dark
                   ? Icons.light_mode
@@ -94,13 +123,15 @@ class _HomePageState extends State<HomePage> {
           ),
           CustomButton(
             onPressed: () {
-              //open log in page
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => FirebaseLoginPage()),
               );
             },
-            child: Text('sign in'),
+            child: Text('sign in',
+                style: TextStyle(
+                    fontSize:
+                        subtitleFontSize)), // Scale sign in button text as well
           ),
         ],
       ),
@@ -108,57 +139,76 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                Container(
+              children: [
+                SizedBox(
+                  // Wrap ImageCarousel with full height
+                  height: carouselHeight,
                   width: double.infinity,
-                  height: h * 0.8,
-                  decoration: BoxDecoration(
-                      //gradient: AppTheme.getDefaultGradient(context),
-                      ),
+                  child: ImageCarousel(
+                    imageUrls: imageList,
+                    screenWidth: screenWidth,
+                  ),
                 ),
                 Positioned(
-                  top: h * 0.1,
-                  child: Column(
-                    children: <Widget>[
-                      Text(
-                        "Holler Tag",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
+                  // Title Block
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: SizedBox(
+                    height: carouselHeight * 0.4,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        IgnorePointer(
+                          // Add IgnorePointer to the transparent background
+                          ignoring: true,
+                          child: Container(
+                            width: double.infinity,
+                            color: Colors.transparent,
+                          ),
                         ),
-                      ),
-                      Text(
-                        "Built for safety. Built to last.\nBuilt for you.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 15),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
-                        child: CustomButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginPage(),
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 20.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text(
+                                "Holler Tag",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: titleFontSize,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            );
-                          }, //for now
-                          child: const Text("Register"),
+                              Text(
+                                "Built for safety. Built to last.\nBuilt for you.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: subtitleFontSize),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: buttonPaddingVertical,
+                                  horizontal: buttonPaddingHorizontal,
+                                ),
+                                child: CustomButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const FirebaseLoginPage(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text("Register",
+                                      style: TextStyle(
+                                          fontSize: subtitleFontSize)),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        height: h * 0.4,
-                        width: h * 0.4,
-                        child: ImageCarousel(
-                          imageUrls: imageList,
-                        ) /* Image.network(
-                          'https://9to5toys.com/wp-content/uploads/sites/5/2020/11/macbook-air-202o-m1.jpg',
-                        ),*/
-                        ,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -166,27 +216,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class ThemeToggleButton extends StatefulWidget {
-  const ThemeToggleButton({super.key});
-
-  @override
-  State<ThemeToggleButton> createState() => _ThemeToggleButtonState();
-}
-
-class _ThemeToggleButtonState extends State<ThemeToggleButton> {
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return IconButton(
-      icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-      onPressed: () {
-        // Find the closest ancestor of _MyAppState and call its _toggleTheme method.
-        context.findAncestorStateOfType<_MyAppState>()?._toggleTheme();
-      },
     );
   }
 }

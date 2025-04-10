@@ -25,7 +25,6 @@ class _FirebaseLoginPageState extends State<FirebaseLoginPage> {
           .addScope('https://www.googleapis.com/auth/userinfo.profile');
       googleProvider.setCustomParameters({'login_hint': 'user@example.com'});
 
-      //userCred = await _auth.signInAnonymously();
       userCred = await _auth.signInWithPopup(googleProvider);
       setState(() {
         _status = userCred?.user?.email ?? "No email found";

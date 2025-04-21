@@ -95,7 +95,7 @@ class ProductPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Premium Ultra Laptop Pro',
+          'HollerTag',
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -104,27 +104,25 @@ class ProductPage extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Experience unparalleled performance with our flagship laptop. '
-          'Featuring the latest processor technology, stunning display, and '
-          'all-day battery life. Perfect for professionals and creatives who '
-          'demand the best.',
+          'Meet the HollerTag, your once-stop shop for safety, style, and suave for your furry friend.'
+          'The QR code on the back allows people who find a lost pet to access the owner\'s information, if they have unlocked it.'
+          'Plus, thanks to advanced 3D printing, the HollerTag can be customized to the finest detail.',
           style: const TextStyle(
             fontSize: 16,
             height: 1.5,
           ),
         ),
         const SizedBox(height: 24),
-        _buildSpecsList(),
+        _buildFeatureList(),
       ],
     );
   }
 
-  Widget _buildSpecsList() {
+  Widget _buildFeatureList() {
     final specs = [
-      {'icon': Icons.memory, 'label': 'Latest Gen Processor'},
-      {'icon': Icons.sd_storage, 'label': '1TB SSD Storage'},
-      {'icon': Icons.battery_full, 'label': '12 Hour Battery Life'},
-      {'icon': Icons.monitor, 'label': '4K Retina Display'},
+      {'icon': Icons.lock_person, 'label': 'Control Your Personal Information'},
+      {'icon': Icons.format_paint_rounded, 'label': 'Customize Style, Color, and Shape'},
+      {'icon': Icons.handyman_rounded, 'label': 'Durable and Pet-Friendly Materials'},
     ];
 
     return Column(
@@ -144,7 +142,11 @@ class ProductPage extends StatelessWidget {
                 children: [
                   Icon(spec['icon'] as IconData, size: 20),
                   const SizedBox(width: 12),
-                  Text(spec['label'] as String),
+                  Text(
+                      spec['label'] as String,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             )),
@@ -171,7 +173,7 @@ class ProductPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'This section will contain product customization options and order functionality.',
+            'Your feedback is important to us. If you have any suggestions for features you would like to see, we\'d love to hear them!',
             style: TextStyle(
               fontStyle: FontStyle.italic,
             ),

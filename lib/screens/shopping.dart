@@ -1,36 +1,9 @@
+// shopping.dart
 import 'package:flutter/material.dart';
-import 'package:myapp/elements/custom_button.dart';
 import 'package:myapp/elements/app_theme.dart';
-
-class Shopping extends StatefulWidget {
-  const Shopping({super.key});
-
-  @override
-  State<Shopping> createState() => _ShoppingState();
-}
-
-class _ShoppingState extends State<Shopping> {
-  ThemeMode _themeMode = ThemeMode.system; // Start with system default
-
-  void _toggleTheme() {
-    setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Holler Tag',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme, // Define your light theme
-      darkTheme: AppTheme.darkTheme, // Define your dark theme
-      themeMode: _themeMode, // Use the managed theme mode
-      home: ShoppingPage(toggleTheme: _toggleTheme), // Pass the toggle function
-    );
-  }
-}
+import 'package:myapp/backend/product.dart';
+import 'package:myapp/elements/product_card.dart';
+import 'package:myapp/elements/my_app_bar.dart';
 
 class ShoppingPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -41,66 +14,95 @@ class ShoppingPage extends StatefulWidget {
   State<ShoppingPage> createState() => _ShoppingPageState();
 }
 
-//IMPORTANT
-//vvv  |Write your UI code in this class| vvv
-
 class _ShoppingPageState extends State<ShoppingPage> {
-  int _crossAxisCount(BuildContext context, double width){
+  final products = <Product>[
+    Product(
+        name: "Tag",
+        price: 15.99,
+        description: "Beauty.",
+        imageUrl: "assets/images/laptop.jpg"),
+    Product(
+        name: "Ultra Tag",
+        price: 29.99,
+        description: "Sexiest tag on the block.",
+        imageUrl: "assets/images/photo-1580522154071-c6ca47a859ad.jpg"),
+    Product(
+      name: "Super Tag",
+      price: 19.99,
+      description: "Cool redefined.",
+      imageUrl: "assets/images/download (1).jpg",
+    )
+  ];
+  final double _imageAspectRatio = 16 / 9;
+  final double _verticalSpacing = 4.0;
+  final int _maxLines = 2;
+  final double _maxFontSize = 16.0;
+  final double _minFontSize = 10.0;
+
+  @override
+  Widget build(BuildContext context) {
+    Color textColor = Theme.of(context).colorScheme.onSurface;
+    return Scaffold(
+        appBar: MyAppBar(toggleTheme: widget.toggleTheme),
+        body: SingleChildScrollView(
+            child: Column(children: [
+          if (MediaQuery.of(context).size.width >= 800)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 50, 16.0, 0),
+              child:
+                  Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Text("HollerTag Products",
+                    style: TextStyle(
+                        color: textColor,
+                        fontSize: 55,
+                        fontWeight: FontWeight.bold)),
+                Spacer(),
+                Text("Built for you.",
+                    style: TextStyle(fontSize: 25, color: textColor))
+              ]),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 30, 16.0, 0),
+              child: Text("HollerTag Products",
+                  style: TextStyle(
+                      fontSize: 34,
+                      color: textColor,
+                      fontWeight: FontWeight.bold)),
+            ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+          GridView.custom(
+            padding: const EdgeInsets.all(16.0),
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 300, // Width of each card
+              mainAxisExtent: 250, // Height of each card
+              mainAxisSpacing: 30,
+              crossAxisSpacing: 20,
+            ),
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            childrenDelegate: SliverChildBuilderDelegate(
+              (BuildContext context, int index) {
+                final product = products[index];
+                return ProductCard(
+                  product: product,
+                  imgUrl: product.imageUrl,
+                  description: product.description,
+                  name: product.name,
+                  phrase: "Beauty at its finest...",
+                  toggleTheme: widget.toggleTheme,
+                );
+              },
+              childCount: products.length,
+            ),
+          ),
+        ])));
+  }
+
+  int _crossAxisCount(BuildContext context, double width) {
     if (width > 1200) return 4;
     if (width > 800) return 3;
     if (width > 600) return 2;
     return 1;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    MediaQueryData queryData = MediaQuery.of(context);
-    double screenWidth = queryData.size.width;
-    double screenHeight = queryData.size.height;
-    double appBarHeight =
-        AppBar().preferredSize.height; // Get AppBar height properly
-
-    final currentGradient = AppTheme.getDefaultGradient(context);
-    final gradientStartColor = currentGradient.colors.first;
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
-        toolbarHeight: 50,
-        actions: [
-          Padding(
-            // Add right padding to the theme toggle button
-            padding: const EdgeInsets.only(right: 16.0),
-            child: IconButton(
-              onPressed: widget.toggleTheme,
-              icon: Icon(
-                Theme.of(context).brightness == Brightness.dark
-                    ? Icons.light_mode
-                    : Icons.dark_mode,
-              ),
-            ),
-          ),
-          Padding(
-            // Add right padding to the sign-in button
-            padding: const EdgeInsets.only(right: 16.0),
-            child: CustomButton(
-              onPressed: () {
-                /*
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => FirebaseLoginPage()),
-                );
-                */
-              },
-              child:
-                  Text('Something', style: TextStyle(fontSize: 20)),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        
-      ),
-    );
   }
 }

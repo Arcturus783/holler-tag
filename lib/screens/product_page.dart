@@ -9,7 +9,7 @@ class ProductPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Check if the screen width is above 600 for responsive layout
-    bool isWideScreen = MediaQuery.of(context).size.width > 600;
+    bool isWideScreen = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
       appBar: MyAppBar(

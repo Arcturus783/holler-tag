@@ -10,7 +10,6 @@ import 'package:myapp/elements/my_app_bar.dart'; // Import the reusable AppBar
 import 'package:myapp/screens/product_page.dart';
 import 'package:myapp/backend/product.dart';
 import 'package:myapp/qr_signup_page.dart';
-import 'package:myapp/goofy_ahh_renderer.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
 // Define route constants (optional but recommended)

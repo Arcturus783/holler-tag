@@ -19,7 +19,8 @@ class AppRoutes {
   //static const String product = '/product';
   // static const String dashboard = '/dashboard'; // Uncomment when ready
   static const String signin = '/signin';
-  static const String product_page = '/productPage';
+  // ignore: constant_identifier_names
+  static const String product_page = '/product_page';
   // static const String qr = '/qr'
   // static const String contact = '/contact'; // Uncomment when ready
 }
@@ -37,7 +38,6 @@ void main() async {
     appId: "1:147037316014:web:4f8247a912242943155e3f",
   ));
   runApp(const MyApp());
-  
 }
 
 class MyApp extends StatefulWidget {
@@ -75,7 +75,8 @@ class _MyAppState extends State<MyApp> {
         // AppRoutes.dashboard: (context) => DashboardPage(toggleTheme: _toggleTheme), // Uncomment when DashboardPage exists
         AppRoutes.signin: (context) =>
             FirebaseLoginPage(toggleTheme: _toggleTheme),
-        AppRoutes.product_page: (context) => ProductPage(toggleTheme: _toggleTheme)
+        AppRoutes.product_page: (context) =>
+            ProductPage(toggleTheme: _toggleTheme)
       },
       // home: HomePage(toggleTheme: _toggleTheme), // Remove 'home' if using initialRoute
     );
@@ -96,64 +97,81 @@ class HomePage extends StatefulWidget {
 //vvv  |Write your UI code in this class| vvv
 
 class _HomePageState extends State<HomePage> {
-  final List<String> imageListLarge = [
-    'assets/images/laptop.jpg',
-    'assets/images/laptop.jpg',
-    'assets/images/laptop.jpg',
-    'assets/images/laptop.jpg',
-    'assets/images/laptop.jpg',
+  final List<String> _lightImageListLarge = [
+    'assets/images/Neues-Macbook-Pro-hat-Power-und-Ports.jpg',
+    'assets/images/apple-macbook-pro-13-3-side-uhd-4k-wallpaper.jpg',
+    'assets/images/Neues-Macbook-Pro-hat-Power-und-Ports.jpg',
+    'assets/images/apple-macbook-pro-13-3-side-uhd-4k-wallpaper.jpg',
+
   ];
-  final List<String> imageListSmall = [
-    'assets/images/516QZcrv+dL.jpg', // Replace with your small screen images
+  final List<String> _lightImageListSmall = [
+    'assets/images/516QZcrv+dL.jpg', // Replace with your light theme small images
+    'assets/images/clouds.jpg',
     'assets/images/516QZcrv+dL.jpg',
-    'assets/images/516QZcrv+dL.jpg',
-    'assets/images/516QZcrv+dL.jpg',
+    'assets/images/clouds.jpg',
   ];
+  final List<String> _darkImageListLarge = [
+    'assets/images/laptop.jpg',
+    'assets/images/macbook-pro__catc3my4a336_og.png',
+    'assets/images/laptop.jpg',
+    'assets/images/macbook-pro__catc3my4a336_og.png',
+    'assets/images/laptop.jpg',
+    'assets/images/macbook-pro__catc3my4a336_og.png',
+  ];
+  final List<String> _darkImageListSmall = [
+    'assets/images/dtech.jpg',
+    'assets/images/smoke.jpg',
+    'assets/images/dtech.jpg',
+    'assets/images/smoke.jpg'
+  ];
+  final String _lightBackgroundImage = 'assets/images/flowers.jpg';
+  final String _darkBackgroundImage = 'assets/images/download (1).jpg';
 
   @override
   Widget build(BuildContext context) {
     MediaQueryData queryData = MediaQuery.of(context);
     double screenWidth = queryData.size.width;
     double screenHeight = queryData.size.height;
-    // double appBarHeight = AppBar().preferredSize.height; // Already calculated by MyAppBar preferredSize
-    // Use kToolbarHeight if needed directly, or access AppBar().preferredSize.height
     double appBarHeight = kToolbarHeight;
     double availableHeightForCarousel = screenHeight - appBarHeight;
 
-    // Base sizes for different screen heights (you can adjust these)
     double baseTitleFontSize = 25.0;
     double baseSubtitleFontSize = 15.0;
     double baseButtonPaddingVertical = 10.0;
     double baseButtonPaddingHorizontal = 20.0;
 
-    // Calculate scaling factor based on available height
-    double baseCarouselHeight = 200.0; // Adjust base height as needed
-    // Ensure availableHeightForCarousel isn't negative or zero if screenHeight is small
+    double baseCarouselHeight = 200.0;
     double scaleFactor = availableHeightForCarousel > 0
         ? availableHeightForCarousel / baseCarouselHeight
         : 1.0;
-    if (scaleFactor < 0.8) scaleFactor = 0.8; // Minimum scale
-    if (scaleFactor > 1.2) scaleFactor = 1.2; // Maximum scale
+    if (scaleFactor < 0.8) scaleFactor = 0.8;
+    if (scaleFactor > 1.2) scaleFactor = 1.2;
 
-    // Apply scaling to sizes
     double titleFontSize = baseTitleFontSize * scaleFactor;
     double subtitleFontSize = baseSubtitleFontSize * scaleFactor;
     double buttonPaddingVertical = baseButtonPaddingVertical * scaleFactor;
     double buttonPaddingHorizontal = baseButtonPaddingHorizontal * scaleFactor;
 
-    // Determine which image list to use based on screen width
+    // Determine which image list to use based on screen width and theme
     List<String> imageUrlsToUse;
-    if (screenWidth >= 800) {
-      imageUrlsToUse = imageListLarge;
+    if (Theme.of(context).brightness == Brightness.dark) {
+      imageUrlsToUse =
+          screenWidth >= 800 ? _darkImageListLarge : _darkImageListSmall;
     } else {
-      imageUrlsToUse = imageListSmall;
+      imageUrlsToUse =
+          screenWidth >= 800 ? _lightImageListLarge : _lightImageListSmall;
     }
+
+    // Determine which background image to use based on theme
+    final String currentBackgroundImage =
+        Theme.of(context).brightness == Brightness.dark
+            ? _darkBackgroundImage
+            : _lightBackgroundImage;
 
     final currentGradient = AppTheme.getDefaultGradient(context);
     final gradientStartColor = currentGradient.colors.first;
 
     return Scaffold(
-      // Use the reusable AppBar, passing the toggleTheme function from the widget property
       appBar: MyAppBar(toggleTheme: widget.toggleTheme),
       body: SingleChildScrollView(
         child: Column(
@@ -169,15 +187,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 Positioned(
-                  // Title Block
                   bottom: 0,
                   left: 0,
                   right: 0,
                   child: SizedBox(
-                    // Ensure height isn't negative
                     height: availableHeightForCarousel > 0
                         ? availableHeightForCarousel * 0.4
-                        : 100, // Adjust height based on available height, provide fallback
+                        : 100,
                     child: Stack(
                       alignment: Alignment.center,
                       children: <Widget>[
@@ -199,8 +215,6 @@ class _HomePageState extends State<HomePage> {
                                 style: TextStyle(
                                   fontSize: titleFontSize,
                                   fontWeight: FontWeight.bold,
-                                  // Optionally add color from theme if needed
-                                  // color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               Text(
@@ -208,8 +222,6 @@ class _HomePageState extends State<HomePage> {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: subtitleFontSize,
-                                  // Optionally add color from theme if needed
-                                  // color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               Padding(
@@ -218,14 +230,18 @@ class _HomePageState extends State<HomePage> {
                                   horizontal: buttonPaddingHorizontal,
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
                                   children: [
                                     CustomButton(
-                                      // Original Register button -> Navigates to Sign In
                                       onPressed: () {
-                                        // Use named route consistent with MaterialApp setup
-                                        Navigator.pushNamed(
-                                            context, AppRoutes.signin);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const QrTo3DApp(),
+                                          )
+                                        );
                                       },
                                       child: Text("Register",
                                           style: TextStyle(
@@ -233,44 +249,42 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     const SizedBox(width: 10.0),
                                     ElevatedButton(
-                                      // Inverted button -> Navigates to Product/Shopping
                                       onPressed: () {
-                                        // Use named route consistent with MaterialApp setup
                                         Navigator.pushNamed(
                                             context, AppRoutes.product_page);
                                       },
-                                      // Removed onHover as it wasn't doing anything
                                       style: ButtonStyle(
                                         shadowColor:
                                             WidgetStateProperty.all<Color>(
                                                 Colors.transparent),
-                                        foregroundColor: WidgetStateProperty
-                                            .resolveWith<Color>(
-                                                (Set<WidgetState> states) {
-                                          return gradientStartColor;
-                                        }),
+                                        foregroundColor:
+                                            WidgetStateProperty.resolveWith<Color>(
+                                          (Set<WidgetState> states) {
+                                            return gradientStartColor;
+                                          },
+                                        ),
                                         backgroundColor:
                                             WidgetStateProperty.all<Color>(
                                                 Colors.transparent),
                                         side: WidgetStateProperty.resolveWith<
-                                            BorderSide>(
-                                          (Set<WidgetState> states) {
-                                            return BorderSide(
-                                              color: gradientStartColor,
-                                              width: 2.5,
-                                            );
-                                          },
-                                        ),
+                                            BorderSide>((Set<WidgetState> states) {
+                                          return BorderSide(
+                                            color: gradientStartColor,
+                                            width: 2.5,
+                                          );
+                                        }),
                                       ),
                                       child: ShaderMask(
-                                        // Renamed button text for clarity
                                         blendMode: BlendMode.srcIn,
                                         shaderCallback: (bounds) =>
                                             currentGradient.createShader(
-                                          Rect.fromLTWH(0, 0, bounds.width,
+                                          Rect.fromLTWH(
+                                              0,
+                                              0,
+                                              bounds.width,
                                               bounds.height),
                                         ),
-                                        child: Text("Shop Now", // Changed text
+                                        child: Text("Shop Now",
                                             style: TextStyle(
                                                 fontSize: subtitleFontSize,
                                                 color: Colors.white)),
@@ -289,85 +303,63 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             Padding(
-              // Filler Paragraphs with Background Image
               padding: const EdgeInsets.all(16.0),
               child: Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: const AssetImage(// Added const
-                        'assets/images/download (1).jpg'), // Replace with your image path
+                    image: AssetImage(currentBackgroundImage),
                     fit: BoxFit.cover,
-                    // Optional: Add color filter for better text readability
-                    // colorFilter: ColorFilter.mode(
-                    //   Colors.black.withOpacity(0.5), // Adjust opacity
-                    //   BlendMode.darken,
-                    // ),
                   ),
-                  borderRadius: BorderRadius.circular(
-                      8.0), // Optional: Add rounded corners
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
                 padding: const EdgeInsets.all(16.0),
                 child: Align(
                   alignment: Alignment.center,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                        maxWidth: math.min(screenWidth * (2 / 3), 800.0)),
+                        maxWidth:
+                            math.min(screenWidth * (2 / 3), 800.0)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          // Use const if text is static
                           "Our Mission",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: subtitleFontSize * 1.5,
                             fontWeight: FontWeight.bold,
-                            // Ensure text color contrasts with background image
-                            // color: Colors.white, // Example if background is dark
                           ),
                         ),
-                        const SizedBox(height: 10.0), // Use const
-                        Text(
-                          // Use const if text is static
+                        const SizedBox(height: 10.0),
+                        const Text(
                           textAlign: TextAlign.center,
                           "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
                           style: TextStyle(
-                            fontSize: subtitleFontSize * 1,
-                            // Ensure text color contrasts with background image
-                            // color: Colors.white70, // Example
+                            fontSize: 16.0,
                           ),
                         ),
-                        const SizedBox(height: 10.0), // Use const
-                        Text(
-                          // Use const if text is static
+                        const SizedBox(height: 10.0),
+                        const Text(
                           textAlign: TextAlign.center,
                           "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
                           style: TextStyle(
-                            fontSize: subtitleFontSize * 1,
-                            // Ensure text color contrasts with background image
-                            // color: Colors.white70, // Example
+                            fontSize: 16.0,
                           ),
                         ),
-                        const SizedBox(height: 10.0), // Use const
-                        Text(
-                          // Use const if text is static
+                        const SizedBox(height: 10.0),
+                        const Text(
                           textAlign: TextAlign.center,
                           "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
                           style: TextStyle(
-                            fontSize: subtitleFontSize * 1,
-                            // Ensure text color contrasts with background image
-                            // color: Colors.white70, // Example
+                            fontSize: 16.0,
                           ),
                         ),
-                        const SizedBox(height: 10.0), // Use const
-                        Text(
-                          // Use const if text is static
+                        const SizedBox(height: 10.0),
+                        const Text(
                           textAlign: TextAlign.center,
                           "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.",
                           style: TextStyle(
-                            fontSize: subtitleFontSize * 1,
-                            // Ensure text color contrasts with background image
-                            // color: Colors.white70, // Example
+                            fontSize: 16.0,
                           ),
                         ),
                       ],
@@ -382,3 +374,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+

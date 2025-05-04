@@ -42,7 +42,7 @@ class CustomButton extends StatelessWidget {
             borderRadius: borderRadius ?? BorderRadius.circular(35.0),
           ),
           elevation: elevation,
-          foregroundColor: textColor ?? Theme.of(context).textTheme.labelLarge?.color,
+          foregroundColor: Colors.white,
         ),
         child: child,
       ),

@@ -3,7 +3,7 @@ import 'package:flutter/scheduler.dart';
 
 class AppTheme {
   static const LinearGradient lightDefaultGradient = LinearGradient(
-    colors: [Color(0xffff8800), Color(0xffff3300)],
+    colors: [Color.fromARGB(255, 0, 217, 255), Color.fromARGB(255, 0, 255, 255)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -18,7 +18,7 @@ class AppTheme {
     brightness: Brightness.light,
     primaryColor: Colors.blue,
     colorScheme: ColorScheme.light(
-      secondary: Colors.amber,
+      secondary: Colors.blue,
       onSecondary: Colors.black,
       primary: Colors.blue,
       onPrimary: Colors.white,

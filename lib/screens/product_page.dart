@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:myapp/elements/my_app_bar.dart';
 import 'package:myapp/elements/app_theme.dart';
 import 'package:image_picker/image_picker.dart'; // For picking images
-import 'package:image_cropper/image_cropper.dart'; // For cropping images
 import 'dart:io'; // For handling File objects
+import 'package:myapp/image_cropper_popup.dart';
+
 class ProductPage extends StatelessWidget {
   final VoidCallback toggleTheme;
 
@@ -53,34 +54,41 @@ class ProductPage extends StatelessWidget {
   }
 
   Widget _buildWideLayout(BuildContext context, Color primaryColor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left side: Product image in container (1/2 of the space)
-        Expanded(
-          flex: 1,
-          child: _buildProductImage(),
-        ),
-        const SizedBox(width: 24),
-        // Right side: Title and description (1/2 of the space)
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _getContainerBackgroundColor(context),
-              borderRadius: BorderRadius.circular(12),
-              border:
-                  Border.all(color: primaryColor, width: 2.0), // Added border
-            ),
-            child: _buildProductInfo(),
+    // Use IntrinsicHeight to make both children of the Row match the height
+    // of the tallest child. In this case, the image will likely be the tallest.
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment
+            .stretch, // Stretch children to fill available height
+        children: [
+          // Left side: Product image in container (1/2 of the space)
+          Expanded(
+            flex: 1,
+            child: _buildProductImage(),
           ),
-        ),
-      ],
+          const SizedBox(width: 24),
+          // Right side: Title and description (1/2 of the space)
+          Expanded(
+            flex: 1,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _getContainerBackgroundColor(context),
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    Border.all(color: primaryColor, width: 2.0), // Added border
+              ),
+              child: _buildProductInfo(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildNarrowLayout(BuildContext context, Color primaryColor) {
+    // For narrow layout, the image and info box are in a Column.
+    // Their heights are not linked; each takes its natural height.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -103,7 +111,8 @@ class ProductPage extends StatelessWidget {
 
   Widget _buildProductImage() {
     return Container(
-      constraints: const BoxConstraints(maxHeight: 400),
+      constraints:
+          const BoxConstraints(maxHeight: 400), // Max height for the image
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
@@ -212,7 +221,7 @@ class ProductPage extends StatelessWidget {
 
     final ValueNotifier<Color?> _selectedColor = ValueNotifier<Color?>(null);
     final ValueNotifier<String?> _selectedSize = ValueNotifier<String?>(null);
-    final ValueNotifier<XFile?> _selectedImage = ValueNotifier<XFile?>(null); // To hold the selected image file
+    final ValueNotifier<XFile?> _selectedImage = ValueNotifier<XFile?>(null);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -313,21 +322,24 @@ class ProductPage extends StatelessWidget {
                 runSpacing: 8.0,
                 children: sizes.map((size) {
                   return ChoiceChip(
-                  label: Text(size),
-                  selected: selectedSize == size,
-                  onSelected: (bool selected) {
-                    _selectedSize.value = selected ? size : null;
-                  },
-                  selectedColor: AppTheme.getDefaultGradient(context).colors.first,
-                  color: WidgetStateProperty.resolveWith<Color?>(
-                    (Set<WidgetState> states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return AppTheme.getDefaultGradient(context).colors.first;
-                      }
-                      return null; // Use default unselected color
+                    label: Text(size),
+                    selected: selectedSize == size,
+                    onSelected: (bool selected) {
+                      _selectedSize.value = selected ? size : null;
                     },
-                  ),
-                );
+                    selectedColor:
+                        AppTheme.getDefaultGradient(context).colors.first,
+                    color: WidgetStateProperty.resolveWith<Color?>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.selected)) {
+                          return AppTheme.getDefaultGradient(context)
+                              .colors
+                              .first;
+                        }
+                        return null;
+                      },
+                    ),
+                  );
                 }).toList(),
               );
             },
@@ -346,48 +358,77 @@ class ProductPage extends StatelessWidget {
                   if (image != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: SizedBox(
-                        width: 100,
-                        height: 100,
-                        child: ClipOval(
-                          child: Image.file(
-                            File(image.path),
-                            fit: BoxFit.cover,
+                      child: Stack(
+                        alignment: Alignment.topRight,
+                        children: [
+                          SizedBox(
+                            width: 100,
+                            height: 100,
+                            child: ClipOval(
+                              child: Image.file(
+                                File(image.path),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
-                        ),
+                          // Add edit button on the preview
+                          Positioned(
+                            top: -8,
+                            right: -8,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.white, size: 16),
+                                onPressed: () => _showImageCropperPopup(
+                                    context, _selectedImage),
+                                padding: const EdgeInsets.all(4),
+                                constraints: const BoxConstraints(
+                                  minWidth: 28,
+                                  minHeight: 28,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ElevatedButton(
-                    onPressed: () => _showImagePickerDialog(context, _selectedImage),
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        _showImagePickerDialog(context, _selectedImage),
+                    icon: const Icon(Icons.photo_library),
+                    label:
+                        Text(image == null ? 'Upload Image' : 'Change Image'),
                     style: ButtonStyle(
                       padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
-                        const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 16),
                       ),
-                      shadowColor: WidgetStateProperty.all<Color>(Colors.transparent),
+                      shadowColor:
+                          WidgetStateProperty.all<Color>(Colors.transparent),
                       foregroundColor: WidgetStateProperty.resolveWith<Color>(
                         (Set<WidgetState> states) {
-                          final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+                          final isDarkMode =
+                              Theme.of(context).brightness == Brightness.dark;
                           return isDarkMode ? Colors.white : Colors.black;
                         },
                       ),
-                      backgroundColor: WidgetStateProperty.all<Color>(Colors.transparent),
+                      backgroundColor:
+                          WidgetStateProperty.all<Color>(Colors.transparent),
                       side: WidgetStateProperty.resolveWith<BorderSide>(
                         (Set<WidgetState> states) {
-                          final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+                          final isDarkMode =
+                              Theme.of(context).brightness == Brightness.dark;
                           return BorderSide(
                             color: isDarkMode ? Colors.white : Colors.black,
                             width: 2.5,
                           );
                         },
-                      ),
-                    ),
-                    child: Text(
-                      'Upload Image',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black,
                       ),
                     ),
                   ),
@@ -407,9 +448,9 @@ class ProductPage extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {
                 // Access selected color, size, and image (_selectedImage.value) here
-                // print('Selected Color: ${_selectedColor.value}');
-                // print('Selected Size: ${_selectedSize.value}');
-                // print('Selected Image Path: ${_selectedImage.value?.path}');
+                print('Selected Color: ${_selectedColor.value}');
+                print('Selected Size: ${_selectedSize.value}');
+                print('Selected Image Path: ${_selectedImage.value?.path}');
                 // Add to cart logic
               },
               style: ButtonStyle(
@@ -448,43 +489,40 @@ class ProductPage extends StatelessWidget {
     );
   }
 
-  Future<void> _showImagePickerDialog(BuildContext context, ValueNotifier<XFile?> selectedImageNotifier) async {
-    showModalBottomSheet(
+// Updated image picker dialog function
+  Future<void> _showImagePickerDialog(
+      BuildContext context, ValueNotifier<XFile?> selectedImage) async {
+    showDialog(
       context: context,
       builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
+        return AlertDialog(
+          title: const Text('Select Image Source'),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
+            children: [
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Pick from Gallery'),
+                title: const Text('Gallery'),
                 onTap: () async {
-                  Navigator.pop(context);
-                  final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-                  if (pickedFile != null) {
-                    // ignore: use_build_context_synchronously
-                    _cropCircularImage(context, pickedFile, selectedImageNotifier);
-                  }
+                  Navigator.of(context).pop();
+                  // No initial image needed for gallery pick
+                  _showImageCropperPopup(context, selectedImage);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a Photo'),
+                title: const Text('Camera'),
                 onTap: () async {
-                  Navigator.pop(context);
-                  final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
-                  if (pickedFile != null) {
-                    // ignore: use_build_context_synchronously
-                    _cropCircularImage(context, pickedFile, selectedImageNotifier);
+                  Navigator.of(context).pop();
+
+                  final ImagePicker picker = ImagePicker();
+                  final XFile? image =
+                      await picker.pickImage(source: ImageSource.camera);
+
+                  if (image != null) {
+                    _showImageCropperPopup(context, selectedImage,
+                        initialImage: image);
                   }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.cancel),
-                title: const Text('Cancel'),
-                onTap: () {
-                  Navigator.pop(context);
                 },
               ),
             ],
@@ -494,27 +532,20 @@ class ProductPage extends StatelessWidget {
     );
   }
 
-
-  Future<void> _cropCircularImage(BuildContext context, XFile imageFile, ValueNotifier<XFile?> selectedImageNotifier) async {
-    CroppedFile? croppedFile = await ImageCropper().cropImage(
-      sourcePath: imageFile.path,
-      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1), // Make it a square
-      uiSettings: [
-        AndroidUiSettings(
-            toolbarTitle: 'Adjust Profile Picture',
-            toolbarColor: Theme.of(context).primaryColor,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: true),
-        IOSUiSettings(
-          title: 'Adjust Profile Picture',
-          aspectRatioLockEnabled: true,
-        ),
-      ],
+// New function to show the image cropper popup
+  Future<void> _showImageCropperPopup(
+      BuildContext context, ValueNotifier<XFile?> selectedImage,
+      {XFile? initialImage}) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ImageCropperPopup(
+          initialImage: initialImage ?? selectedImage.value,
+          onImageCropped: (XFile croppedImage) {
+            selectedImage.value = croppedImage;
+          },
+        );
+      },
     );
-
-    if (croppedFile != null) {
-      selectedImageNotifier.value = XFile(croppedFile.path);
-    }
   }
 }

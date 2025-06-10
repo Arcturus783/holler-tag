@@ -6,16 +6,15 @@ sign in. We will eventually delete it, but I want it around
 for now as a reference.
 */
 
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 //import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
 
   //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId:
         '147037316014-k25n77jbig8j694mn3d8g3e2dma3vfin.apps.googleusercontent.com', // Only needed for web
     scopes: [
@@ -24,7 +23,7 @@ class AuthService {
     ],
   );
 
-  Future<UserCredential?> signInWithGoogle() async {
+  static Future<UserCredential?> signInWithGoogle() async {
     //bool isAuthorized = await _googleSignIn.canAccessScopes(["email", "profile"]);
 
     try {
@@ -102,7 +101,7 @@ class AuthService {
   }
 
   // Get current user
-  User? getCurrentUser() {
+  static User? getCurrentUser() {
     return _auth.currentUser;
   }
 

@@ -10,34 +10,34 @@ import 'package:myapp/elements/my_app_bar.dart'; // Import the reusable AppBar
 import 'package:myapp/screens/product_page.dart';
 import 'package:myapp/backend/product.dart';
 import 'package:myapp/qr_signup_page.dart';
-//import 'package:google_fonts/google_fonts.dart';
+import 'package:myapp/screens/dashboard_page.dart'; // Import the new DashboardPage
+import 'package:myapp/backend/model_generation.dart';
 
-// Define route constants (optional but recommended)
+// Define route constants for easy navigation
 class AppRoutes {
   static const String home = '/';
-  // static const String reviews = '/reviews'; // Uncomment when ready
-  //static const String product = '/product';
-  // static const String dashboard = '/dashboard'; // Uncomment when ready
+  static const String dashboard = '/dashboard'; // New dashboard route
   static const String signin = '/signin';
-  // ignore: constant_identifier_names
+  // ignore: constant_identifier_names // Keeping ignore as in original code
   static const String product_page = '/product_page';
-  // static const String qr = '/qr'
-  // static const String contact = '/contact'; // Uncomment when ready
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //move api keys eventually
+  // Initialize Firebase with your project options
+  // IMPORTANT: For production, secure your API key. Avoid hardcoding.
   await Firebase.initializeApp(
       options: const FirebaseOptions(
-    apiKey: "AIzaSyDbpGqdo3YDfpcnoH6UXhDUbK7B7EvbmnY", // SECURITY RISK
+    apiKey:
+        "AIzaSyDbpGqdo3YDfpcnoH6UXhDUbK7B7EvbmnY", // SECURITY RISK: THIS SHOULD BE SECURED!
     authDomain: "holler-tag.firebaseapp.com",
     projectId: "holler-tag",
     storageBucket: "holler-tag.firebasestorage.app",
     messagingSenderId: "147037316014",
     appId: "1:147037316014:web:4f8247a912242943155e3f",
   ));
-  runApp(const MyApp());
+  runApp(UltimateDecalApp());
+  //runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -48,8 +48,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system; // Start with system default
+  ThemeMode _themeMode = ThemeMode.system; // Start with system default theme
 
+  // Callback function to toggle between light and dark themes
   void _toggleTheme() {
     setState(() {
       _themeMode =
@@ -61,51 +62,47 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Holler Tag',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme, // Define your light theme
-      darkTheme: AppTheme.darkTheme, // Define your dark theme
-      themeMode: _themeMode,
+      debugShowCheckedModeBanner: false, // Set to false for production
+      theme: AppTheme.lightTheme, // Apply the custom light theme
+      darkTheme: AppTheme.darkTheme, // Apply the custom dark theme
+      themeMode: _themeMode, // Control theme based on internal state
 
-      initialRoute: AppRoutes.home, // Use constant
+      initialRoute: AppRoutes.home, // Set the initial route for the application
       routes: {
-        // Pass _toggleTheme during route creation
+        // Define all named routes and their corresponding widgets
+        // Pass the _toggleTheme function to pages that need to access it (e.g., via their AppBar)
         AppRoutes.home: (context) => HomePage(toggleTheme: _toggleTheme),
-        // AppRoutes.reviews: (context) => ReviewsPage(toggleTheme: _toggleTheme), // Uncomment when ReviewsPage exists
-        //AppRoutes.product: (context) => ShoppingPage(toggleTheme: _toggleTheme),
-        // AppRoutes.dashboard: (context) => DashboardPage(toggleTheme: _toggleTheme), // Uncomment when DashboardPage exists
+        AppRoutes.dashboard: (context) =>
+            DashboardPage(toggleTheme: _toggleTheme), // Dashboard Page route
         AppRoutes.signin: (context) =>
             FirebaseLoginPage(toggleTheme: _toggleTheme),
         AppRoutes.product_page: (context) =>
             ProductPage(toggleTheme: _toggleTheme)
       },
-      // home: HomePage(toggleTheme: _toggleTheme), // Remove 'home' if using initialRoute
     );
   }
 }
 
 class HomePage extends StatefulWidget {
-  final VoidCallback toggleTheme;
+  final VoidCallback toggleTheme; // Receive toggleTheme callback from MyApp
 
   const HomePage({super.key, required this.toggleTheme});
-  //const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-//IMPORTANT
-//vvv  |Write your UI code in this class| vvv
-
+// IMPORTANT: This class contains the UI code for your HomePage
 class _HomePageState extends State<HomePage> {
+  // Image lists for carousel, responsive to screen size and theme
   final List<String> _lightImageListLarge = [
     'assets/images/Neues-Macbook-Pro-hat-Power-und-Ports.jpg',
     'assets/images/apple-macbook-pro-13-3-side-uhd-4k-wallpaper.jpg',
     'assets/images/Neues-Macbook-Pro-hat-Power-und-Ports.jpg',
     'assets/images/apple-macbook-pro-13-3-side-uhd-4k-wallpaper.jpg',
-
   ];
   final List<String> _lightImageListSmall = [
-    'assets/images/516QZcrv+dL.jpg', // Replace with your light theme small images
+    'assets/images/516QZcrv+dL.jpg',
     'assets/images/clouds.jpg',
     'assets/images/516QZcrv+dL.jpg',
     'assets/images/clouds.jpg',
@@ -124,35 +121,42 @@ class _HomePageState extends State<HomePage> {
     'assets/images/dtech.jpg',
     'assets/images/smoke.jpg'
   ];
+  // Background images for the "Our Mission" section
   final String _lightBackgroundImage = 'assets/images/flowers.jpg';
   final String _darkBackgroundImage = 'assets/images/download (1).jpg';
 
   @override
   Widget build(BuildContext context) {
+    // Get media query data for responsive sizing
     MediaQueryData queryData = MediaQuery.of(context);
     double screenWidth = queryData.size.width;
     double screenHeight = queryData.size.height;
     double appBarHeight = kToolbarHeight;
+    // Calculate available vertical space for the carousel
     double availableHeightForCarousel = screenHeight - appBarHeight;
 
+    // Define base font sizes and padding for scaling
     double baseTitleFontSize = 25.0;
     double baseSubtitleFontSize = 15.0;
     double baseButtonPaddingVertical = 10.0;
     double baseButtonPaddingHorizontal = 20.0;
 
-    double baseCarouselHeight = 200.0;
+    // Calculate scaling factor for dynamic font sizes and padding
+    double baseCarouselHeight = 200.0; // Reference height for scaling
     double scaleFactor = availableHeightForCarousel > 0
         ? availableHeightForCarousel / baseCarouselHeight
         : 1.0;
+    // Clamp scale factor to prevent too small or too large text/buttons
     if (scaleFactor < 0.8) scaleFactor = 0.8;
     if (scaleFactor > 1.2) scaleFactor = 1.2;
 
+    // Apply scale factor to font sizes and padding
     double titleFontSize = baseTitleFontSize * scaleFactor;
     double subtitleFontSize = baseSubtitleFontSize * scaleFactor;
     double buttonPaddingVertical = baseButtonPaddingVertical * scaleFactor;
     double buttonPaddingHorizontal = baseButtonPaddingHorizontal * scaleFactor;
 
-    // Determine which image list to use based on screen width and theme
+    // Select image list based on screen width and current theme
     List<String> imageUrlsToUse;
     if (Theme.of(context).brightness == Brightness.dark) {
       imageUrlsToUse =
@@ -162,17 +166,19 @@ class _HomePageState extends State<HomePage> {
           screenWidth >= 800 ? _lightImageListLarge : _lightImageListSmall;
     }
 
-    // Determine which background image to use based on theme
+    // Select background image based on current theme
     final String currentBackgroundImage =
         Theme.of(context).brightness == Brightness.dark
             ? _darkBackgroundImage
             : _lightBackgroundImage;
 
+    // Get the current gradient from the app theme
     final currentGradient = AppTheme.getDefaultGradient(context);
     final gradientStartColor = currentGradient.colors.first;
 
     return Scaffold(
-      appBar: MyAppBar(toggleTheme: widget.toggleTheme),
+      appBar:
+          MyAppBar(toggleTheme: widget.toggleTheme), // Use the custom AppBar
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -193,17 +199,19 @@ class _HomePageState extends State<HomePage> {
                   child: SizedBox(
                     height: availableHeightForCarousel > 0
                         ? availableHeightForCarousel * 0.4
-                        : 100,
+                        : 100, // Adjust height based on available space
                     child: Stack(
                       alignment: Alignment.center,
                       children: <Widget>[
+                        // Ignore pointer to allow taps on elements behind this transparent container
                         IgnorePointer(
                           ignoring: true,
                           child: Container(
                             width: double.infinity,
-                            color: Colors.transparent,
+                            color: Colors.transparent, // Transparent overlay
                           ),
                         ),
+                        // Text and buttons for the main call to action
                         Padding(
                           padding: const EdgeInsets.only(bottom: 20.0),
                           child: Column(
@@ -230,26 +238,28 @@ class _HomePageState extends State<HomePage> {
                                   horizontal: buttonPaddingHorizontal,
                                 ),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
+                                    // "Register" button
                                     CustomButton(
                                       onPressed: () {
                                         Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const QrTo3DApp(),
-                                          )
-                                        );
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const QrTo3DApp(),
+                                            ));
                                       },
                                       child: Text("Register",
                                           style: TextStyle(
                                               fontSize: subtitleFontSize)),
                                     ),
-                                    const SizedBox(width: 10.0),
+                                    const SizedBox(
+                                        width: 10.0), // Spacing between buttons
+                                    // "Shop Now" button
                                     ElevatedButton(
                                       onPressed: () {
+                                        // Navigate to the product page
                                         Navigator.pushNamed(
                                             context, AppRoutes.product_page);
                                       },
@@ -257,8 +267,8 @@ class _HomePageState extends State<HomePage> {
                                         shadowColor:
                                             WidgetStateProperty.all<Color>(
                                                 Colors.transparent),
-                                        foregroundColor:
-                                            WidgetStateProperty.resolveWith<Color>(
+                                        foregroundColor: WidgetStateProperty
+                                            .resolveWith<Color>(
                                           (Set<WidgetState> states) {
                                             return gradientStartColor;
                                           },
@@ -267,7 +277,8 @@ class _HomePageState extends State<HomePage> {
                                             WidgetStateProperty.all<Color>(
                                                 Colors.transparent),
                                         side: WidgetStateProperty.resolveWith<
-                                            BorderSide>((Set<WidgetState> states) {
+                                                BorderSide>(
+                                            (Set<WidgetState> states) {
                                           return BorderSide(
                                             color: gradientStartColor,
                                             width: 2.5,
@@ -278,10 +289,7 @@ class _HomePageState extends State<HomePage> {
                                         blendMode: BlendMode.srcIn,
                                         shaderCallback: (bounds) =>
                                             currentGradient.createShader(
-                                          Rect.fromLTWH(
-                                              0,
-                                              0,
-                                              bounds.width,
+                                          Rect.fromLTWH(0, 0, bounds.width,
                                               bounds.height),
                                         ),
                                         child: Text("Shop Now",
@@ -302,6 +310,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
+            // "Our Mission" section
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
@@ -317,8 +326,7 @@ class _HomePageState extends State<HomePage> {
                   alignment: Alignment.center,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                        maxWidth:
-                            math.min(screenWidth * (2 / 3), 800.0)),
+                        maxWidth: math.min(screenWidth * (2 / 3), 800.0)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -374,4 +382,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-

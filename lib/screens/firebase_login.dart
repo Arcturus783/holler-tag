@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:myapp/elements/my_app_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:myapp/backend/google_auth.dart';
 
 class FirebaseLoginPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -79,7 +80,13 @@ class _FirebaseLoginPageState extends State<FirebaseLoginPage>
         child: Center(
           child: SizedBox(
             width: 800,
-            child: Container(
+            child: 
+            AuthService.getCurrentUser() != null ? 
+              Text(
+                "Welcome back ${(AuthService.getCurrentUser()!.displayName)}!"
+              )
+            :
+            Container(
               width: double.infinity,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -126,7 +133,7 @@ class _FirebaseLoginPageState extends State<FirebaseLoginPage>
                         ),
                         const SizedBox(height: 40),
                         Text(
-                          "Welcome Back",
+                          "Welcome!",
                           style: GoogleFonts.poppins(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,

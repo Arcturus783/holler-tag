@@ -3,7 +3,8 @@ import 'package:myapp/elements/my_app_bar.dart';
 import 'package:myapp/elements/app_theme.dart';
 import 'package:image_picker/image_picker.dart'; // For picking images
 import 'dart:io'; // For handling File objects
-import 'package:myapp/image_cropper_popup.dart';
+import 'package:myapp/elements/image_cropper_popup.dart';
+import 'package:myapp/backend/google_auth.dart';
 
 class ProductPage extends StatelessWidget {
   final VoidCallback toggleTheme;
@@ -447,11 +448,12 @@ class ProductPage extends StatelessWidget {
           Center(
             child: ElevatedButton(
               onPressed: () {
-                // Access selected color, size, and image (_selectedImage.value) here
-                print('Selected Color: ${_selectedColor.value}');
-                print('Selected Size: ${_selectedSize.value}');
-                print('Selected Image Path: ${_selectedImage.value?.path}');
-                // Add to cart logic
+                if (AuthService.getCurrentUser() != null) {
+                  //continue with payment
+                } else {
+                  AuthService.signInWithGoogle();
+                  //then continue with payment
+                }
               },
               style: ButtonStyle(
                 padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
@@ -479,7 +481,7 @@ class ProductPage extends StatelessWidget {
                 shaderCallback: (bounds) => currentGradient.createShader(
                   Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                 ),
-                child: const Text('Add to Cart',
+                child: const Text('Purchase',
                     style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),

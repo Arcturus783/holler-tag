@@ -36,8 +36,7 @@ void main() async {
     messagingSenderId: "147037316014",
     appId: "1:147037316014:web:4f8247a912242943155e3f",
   ));
-  runApp(UltimateDecalApp());
-  //runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {

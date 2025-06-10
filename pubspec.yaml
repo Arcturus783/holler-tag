@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  image: ^4.0.15
+  image: ^3.0.2
   file_picker: ^9.0.0
   file_saver: ^0.2.14
   
@@ -45,13 +45,13 @@ dependencies:
   firebase_core: ^3.12.1
   firebase_auth: ^5.5.1
   cloud_firestore: ^5.6.5
-  google_fonts: ^6.2.1
+  google_fonts: ^4.0.3
   google_sign_in: ^6.3.0
   google_sign_in_web: ^0.12.4+4
   google_sign_in_platform_interface: ^2.5.0
-  flutter_cube: ^0.1.1
   universal_html: ^2.2.3
   permission_handler: ^12.0.0+1
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

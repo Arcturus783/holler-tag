@@ -22,8 +22,8 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   // Placeholder data for user information
-  String _userName = 'John Doe';
-  String _userEmail = 'john.doe@example.com';
+  String _userName = AuthService.getCurrentUser()!.displayName ?? '';
+  String _userEmail = AuthService.getCurrentUser()!.email ?? '';
 
   // Placeholder data for shipping information
   String _shippingAddressLine1 = '123 Main St';

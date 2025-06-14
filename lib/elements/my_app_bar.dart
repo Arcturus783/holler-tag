@@ -4,6 +4,8 @@ import 'package:myapp/screens/shopping.dart'; // Adjust import if needed
 import 'package:myapp/elements/app_theme.dart';
 import 'package:myapp/screens/dashboard_page.dart'; // Import DashboardPage explicitly for route access
 import 'package:myapp/screens/product_page.dart'; // Import ProductPage explicitly for route access
+import 'package:myapp/backend/google_auth.dart';
+import 'package:myapp/elements/custom_button.dart';
 // Note: You might want to define AppRoutes in a separate common file (e.g., app_routes.dart)
 // and import that into main.dart and other files that need access to route constants.
 // For now, mirroring the AppRoutes definition here for immediate functionality.
@@ -155,6 +157,89 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+  void _showSignInPopup(BuildContext context) {
+    // Get screen width for responsive sizing of the dialog
+    final double screenWidth = MediaQuery.of(context).size.width;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(15.0), // Rounded corners for the dialog
+          ),
+          // Constrain the width of the AlertDialog based on screen size
+          contentPadding: EdgeInsets
+              .zero, // Remove default content padding to allow CustomContent to handle it
+          insetPadding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 24.0), // Standard material dialog padding
+          content: Container(
+            width: screenWidth > 600
+                ? screenWidth * 0.4
+                : screenWidth * 0.8, // 40% for large, 80% for small
+            constraints: BoxConstraints(
+              maxWidth: screenWidth > 600
+                  ? screenWidth * 0.4
+                  : screenWidth * 0.8, // Ensure it doesn't exceed this width
+              maxHeight: MediaQuery.of(context).size.height *
+                  0.6, // Max height 60% of screen height
+            ),
+            child: SingleChildScrollView(
+              // Make content scrollable if it overflows
+              child: Padding(
+                padding:
+                const EdgeInsets.all(24.0), // Add padding back to content
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // To wrap content tightly
+                  children: [
+                    Text(
+                      'You need to sign in to access the dashboard!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: screenWidth > 600
+                            ? 24
+                            : 20, // Responsive title font size
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context)
+                            .textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    CustomButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRoutes.signin);
+                      },
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(8.0),
+                      textColor: Colors.white,
+                      padding : const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                      child: const Text('Sign In'),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+              child: Text(
+                'Close',
+                style:
+                TextStyle(color: Theme.of(context).colorScheme.secondary),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     // Get screen width for responsiveness
@@ -209,6 +294,13 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
         onPressed: () {
           if (buttonRouteName == AppRoutes.contact) {
             _showContactUsPopup(context); // Show popup for Contact Us
+          } else if(buttonRouteName == AppRoutes.dashboard) {
+            if(AuthService.getCurrentUser() != null){
+              Navigator.pushNamed(context, buttonRouteName);
+            } else{
+               //pop up to prompt sign in
+              _showSignInPopup(context);
+            }
           } else if (currentRouteName != buttonRouteName) {
             // Avoid navigating if already on the current route
             // For 'Home', clear the navigation stack to prevent back button issues

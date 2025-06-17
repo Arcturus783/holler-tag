@@ -3,39 +3,40 @@ import 'package:myapp/elements/custom_button.dart';
 import 'package:myapp/elements/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:myapp/elements/image_carousel.dart';
-import 'package:myapp/screens/firebase_login.dart'; // Import needed for route definition
+import 'package:myapp/screens/firebase_login.dart';
 import 'dart:math' as math;
-import 'package:myapp/screens/shopping.dart'; // Import needed for route definition
-import 'package:myapp/elements/my_app_bar.dart'; // Import the reusable AppBar
-import 'package:myapp/screens/product_page.dart';
+import 'package:myapp/screens/shopping.dart';
+import 'package:myapp/elements/my_app_bar.dart';
+import 'package:myapp/screens/product_page.dart'; // Your existing product (shopping) page
 import 'package:myapp/backend/product.dart';
 import 'package:myapp/qr_signup_page.dart';
-import 'package:myapp/screens/dashboard_page.dart'; // Import the new DashboardPage
+import 'package:myapp/screens/dashboard_page.dart';
 import 'package:myapp/backend/model_generation.dart';
+
+// NEW IMPORT for the page that displays scanned product details
+import 'package:myapp/screens/scanned_product_detail_page.dart'; // Create this file
 
 // Define route constants for easy navigation
 class AppRoutes {
   static const String home = '/';
-  static const String dashboard = '/dashboard'; // New dashboard route
+  static const String dashboard = '/dashboard';
   static const String signin = '/signin';
-  // ignore: constant_identifier_names // Keeping ignore as in original code
-  static const String product_page = '/product_page';
+  static const String product_page = '/product_page'; // This is your SHOPPING page
+// static const String scanned_product_detail = '/products/:productId'; // Conceptual, handled by onGenerateRoute
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize Firebase with your project options
-  // IMPORTANT: For production, secure your API key. Avoid hardcoding.
   await Firebase.initializeApp(
       options: const FirebaseOptions(
-    apiKey:
+        apiKey:
         "AIzaSyDbpGqdo3YDfpcnoH6UXhDUbK7B7EvbmnY", // SECURITY RISK: THIS SHOULD BE SECURED!
-    authDomain: "holler-tag.firebaseapp.com",
-    projectId: "holler-tag",
-    storageBucket: "holler-tag.firebasestorage.app",
-    messagingSenderId: "147037316014",
-    appId: "1:147037316014:web:4f8247a912242943155e3f",
-  ));
+        authDomain: "holler-tag.firebaseapp.com",
+        projectId: "holler-tag",
+        storageBucket: "holler-tag.firebasestorage.app",
+        messagingSenderId: "147037316014",
+        appId: "1:147037316014:web:4f8247a912242943155e3f",
+      ));
   runApp(const MyApp());
 }
 
@@ -47,13 +48,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system; // Start with system default theme
+  ThemeMode _themeMode = ThemeMode.system;
 
-  // Callback function to toggle between light and dark themes
   void _toggleTheme() {
     setState(() {
       _themeMode =
-          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+      _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     });
   }
 
@@ -61,26 +61,54 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Holler Tag',
-      debugShowCheckedModeBanner: false, // Set to false for production
-      theme: AppTheme.lightTheme, // Apply the custom light theme
-      darkTheme: AppTheme.darkTheme, // Apply the custom dark theme
-      themeMode: _themeMode, // Control theme based on internal state
-
-      initialRoute: AppRoutes.home, // Set the initial route for the application
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: _themeMode,
+      initialRoute: AppRoutes.home,
       routes: {
-        // Define all named routes and their corresponding widgets
-        // Pass the _toggleTheme function to pages that need to access it (e.g., via their AppBar)
+        // Your existing static routes for the application
         AppRoutes.home: (context) => HomePage(toggleTheme: _toggleTheme),
         AppRoutes.dashboard: (context) =>
-            DashboardPage(toggleTheme: _toggleTheme), // Dashboard Page route
+            DashboardPage(toggleTheme: _toggleTheme),
         AppRoutes.signin: (context) =>
             FirebaseLoginPage(toggleTheme: _toggleTheme),
         AppRoutes.product_page: (context) =>
-            ProductPage(toggleTheme: _toggleTheme)
+            ProductPage(toggleTheme: _toggleTheme) // This is your SHOPPING page
+      },
+
+      // Use onGenerateRoute for dynamic routes (like /products/:productId from QR scan)
+      onGenerateRoute: (settings) {
+        final uri = Uri.parse(settings.name!);
+        final pathSegments = uri.pathSegments;
+
+        // Handle the /products/:productId route for scanned QR codes
+        if (pathSegments.length == 2 && pathSegments[0] == 'products') {
+          final productId = pathSegments[1];
+          return MaterialPageRoute(
+            builder: (context) => ScannedProductDetailPage(
+              productId: productId,
+              toggleTheme: _toggleTheme,
+            ),
+            settings: settings, // Important for browser history and back button
+          );
+        }
+
+        // If no matching dynamic route is found, fall back to an error page or home
+        // IMPORTANT: For production, you might want to return a dedicated 404 page
+        // or redirect to a known route.
+        return MaterialPageRoute(
+          builder: (context) => const Scaffold(
+            body: Center(
+              child: Text('Error: Page not found. Check the URL.'),
+            ),
+          ),
+        );
       },
     );
   }
 }
+
 
 class HomePage extends StatefulWidget {
   final VoidCallback toggleTheme; // Receive toggleTheme callback from MyApp

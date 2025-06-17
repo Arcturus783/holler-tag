@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ImageCropperPopup extends StatefulWidget {
@@ -11,10 +10,10 @@ class ImageCropperPopup extends StatefulWidget {
   final XFile? initialImage;
 
   const ImageCropperPopup({
-    Key? key,
+    super.key,
     required this.onImageCropped,
     this.initialImage,
-  }) : super(key: key);
+  });
 
   @override
   State<ImageCropperPopup> createState() => _ImageCropperPopupState();
@@ -33,7 +32,7 @@ class _ImageCropperPopupState extends State<ImageCropperPopup> {
   bool _isImageLoaded = false;
   
   // Control modes
-  bool _isMovingCropper = false; // true = move cropper, false = move image
+  final bool _isMovingCropper = false; // true = move cropper, false = move image
   
   // Initial scale values for slider bounds
   double _initialScale = 1.0;
@@ -479,8 +478,10 @@ class _ImageCropperPopupState extends State<ImageCropperPopup> {
                         try {
                           final croppedImage = await _cropImage();
                           widget.onImageCropped(croppedImage);
+                          // ignore: use_build_context_synchronously
                           Navigator.of(context).pop();
                         } catch (e) {
+                          // ignore: use_build_context_synchronously
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Error cropping image: $e')),
                           );
@@ -756,6 +757,7 @@ class CropOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final overlayPaint = Paint()
+      // ignore: deprecated_member_use
       ..color = Colors.black.withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
@@ -777,6 +779,7 @@ class CropOverlayPainter extends CustomPainter {
     
     // Draw center crosshairs
     final crosshairPaint = Paint()
+      // ignore: deprecated_member_use
       ..color = (isMovingCropper ? Colors.blue : Colors.white).withOpacity(0.7)
       ..strokeWidth = 1.5;
     

@@ -295,15 +295,13 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
           if (buttonRouteName == AppRoutes.contact) {
             _showContactUsPopup(context); // Show popup for Contact Us
           } else if(buttonRouteName == AppRoutes.dashboard) {
-            Navigator.pushNamed(context, buttonRouteName);
-            /*
             if(AuthService.getCurrentUser() != null){
               Navigator.pushNamed(context, buttonRouteName);
             } else{
                //pop up to prompt sign in
               _showSignInPopup(context);
             }
-             */
+
           } else if (currentRouteName != buttonRouteName) {
             // Avoid navigating if already on the current route
             // For 'Home', clear the navigation stack to prevent back button issues

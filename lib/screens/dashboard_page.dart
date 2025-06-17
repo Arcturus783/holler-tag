@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/backend/google_auth.dart';
 
-// Assuming AppRoutes is defined in a common file like app_routes.dart or main.dart
-// For this example, we'll assume it's accessible or defined locally for clarity.
 class AppRoutes {
   static const String home = '/';
   static const String reviews = '/reviews';

@@ -13,428 +13,707 @@ import 'package:myapp/elements/custom_button.dart';
 // Define your route names as constants
 class AppRoutes {
   static const String home = '/';
-  static const String reviews = '/reviews';
   static const String product_page = '/product_page';
   static const String dashboard = '/dashboard';
   static const String signin = '/signin';
   static const String contact = '/contact';
 }
 
-class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
+class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback toggleTheme;
 
   const MyAppBar({super.key, required this.toggleTheme});
 
-  // --- Helper Method for basic text style (color, weight, RESPONSIVE FONT SIZE) ---
-  // Added screenWidth parameter
-  TextStyle _getBaseTextStyle(
-      BuildContext context, bool isActive, double screenWidth) {
-    final Color? foregroundColor =
-        Theme.of(context).appBarTheme.foregroundColor;
-
-    // --- Responsive Font Size Logic ---
-    double targetFontSize;
-    // Define breakpoints and target font sizes (adjust these as needed)
-    if (screenWidth < 400) {
-      // Very Narrow screens (small phones portrait)
-      targetFontSize = 14.0;
-    } else if (screenWidth < 600) {
-      // Narrow screens (most phones portrait)
-      targetFontSize = 15.0;
-    } else if (screenWidth < 900) {
-      // Medium screens (large phones landscape, small tablets)
-      targetFontSize = 16.0;
-    } else if (screenWidth < 1200) {
-      // Wide screens (test with tablets landscape, small desktop)
-      targetFontSize =
-          17.0; // Changed from 18.0 to 17.0 for more consistent scaling
-    } else {
-      // Very Wide screens (large desktop)
-      targetFontSize =
-          18.0; // Changed from 20.0 to 18.0 for more consistent scaling
-    }
-    // --- End Responsive Font Size Logic ---
-
-    return TextStyle(
-      color: foregroundColor ?? Colors.white, // Use fallback for safety
-      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-      fontSize: targetFontSize, // Apply the calculated font size
-    );
-  }
-
-  // --- Function to show the Contact Us popup ---
-  void _showContactUsPopup(BuildContext context) {
-    // Get screen width for responsive sizing of the dialog
-    final double screenWidth = MediaQuery.of(context).size.width;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(15.0), // Rounded corners for the dialog
-          ),
-          // Constrain the width of the AlertDialog based on screen size
-          contentPadding: EdgeInsets
-              .zero, // Remove default content padding to allow CustomContent to handle it
-          insetPadding: const EdgeInsets.symmetric(
-              horizontal: 20.0,
-              vertical: 24.0), // Standard material dialog padding
-          content: Container(
-            width: screenWidth > 600
-                ? screenWidth * 0.4
-                : screenWidth * 0.8, // 40% for large, 80% for small
-            constraints: BoxConstraints(
-              maxWidth: screenWidth > 600
-                  ? screenWidth * 0.4
-                  : screenWidth * 0.8, // Ensure it doesn't exceed this width
-              maxHeight: MediaQuery.of(context).size.height *
-                  0.6, // Max height 60% of screen height
-            ),
-            child: SingleChildScrollView(
-              // Make content scrollable if it overflows
-              child: Padding(
-                padding:
-                    const EdgeInsets.all(24.0), // Add padding back to content
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // To wrap content tightly
-                  children: [
-                    Text(
-                      'Contact Us',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: screenWidth > 600
-                            ? 24
-                            : 20, // Responsive title font size
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary, // Use app's primary color
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Email: support@example.com',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: screenWidth > 600
-                            ? 18
-                            : 16, // Responsive content font size
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Phone: +1 (123) 456-7890', // Example phone number
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: screenWidth > 600
-                            ? 18
-                            : 16, // Responsive content font size
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(); // Close the dialog
-              },
-              child: Text(
-                'Close',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.secondary),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSignInPopup(BuildContext context) {
-    // Get screen width for responsive sizing of the dialog
-    final double screenWidth = MediaQuery.of(context).size.width;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(15.0), // Rounded corners for the dialog
-          ),
-          // Constrain the width of the AlertDialog based on screen size
-          contentPadding: EdgeInsets
-              .zero, // Remove default content padding to allow CustomContent to handle it
-          insetPadding: const EdgeInsets.symmetric(
-              horizontal: 20.0,
-              vertical: 24.0), // Standard material dialog padding
-          content: Container(
-            width: screenWidth > 600
-                ? screenWidth * 0.4
-                : screenWidth * 0.8, // 40% for large, 80% for small
-            constraints: BoxConstraints(
-              maxWidth: screenWidth > 600
-                  ? screenWidth * 0.4
-                  : screenWidth * 0.8, // Ensure it doesn't exceed this width
-              maxHeight: MediaQuery.of(context).size.height *
-                  0.6, // Max height 60% of screen height
-            ),
-            child: SingleChildScrollView(
-              // Make content scrollable if it overflows
-              child: Padding(
-                padding:
-                const EdgeInsets.all(24.0), // Add padding back to content
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // To wrap content tightly
-                  children: [
-                    Text(
-                      'You need to sign in to access the dashboard!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: screenWidth > 600
-                            ? 24
-                            : 20, // Responsive title font size
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context)
-                            .textTheme.bodyMedium?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    CustomButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, AppRoutes.signin);
-                      },
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(8.0),
-                      textColor: Colors.white,
-                      padding : const EdgeInsets.fromLTRB(6, 6, 6, 6),
-                      child: const Text('Sign In'),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(); // Close the dialog
-              },
-              child: Text(
-                'Close',
-                style:
-                TextStyle(color: Theme.of(context).colorScheme.secondary),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
+  @override
+  State<MyAppBar> createState() => _MyAppBarState();
 
   @override
-  Widget build(BuildContext context) {
-    // Get screen width for responsiveness
-    final double screenWidth = MediaQuery.of(context).size.width;
-    const double mobileBreakpoint = 850; // Adjust this value as needed
-
-    final String? currentRouteName = ModalRoute.of(context)?.settings.name;
-    final Color? appBarBackgroundColor =
-        Theme.of(context).appBarTheme.backgroundColor;
-    final Color appBarForegroundColor =
-        Theme.of(context).appBarTheme.foregroundColor ?? Colors.white;
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // --- Function to create the MenuItem for the Hamburger ---
-    PopupMenuItem<String> buildMenuItem(String label, String routeName) {
-      final bool isActive = currentRouteName == routeName;
-      final Color textColor = Theme.of(context).textTheme.bodyMedium?.color ??
-          Colors.black; // Use a fallback color
-      final double targetFontSize;
-      if (screenWidth < 400) {
-        targetFontSize = 14.0;
-      } else if (screenWidth < 600) {
-        targetFontSize = 15.0;
-      } else if (screenWidth < 900) {
-        targetFontSize = 16.0;
-      } else if (screenWidth < 1200) {
-        targetFontSize = 17.0;
-      } else {
-        targetFontSize = 18.0;
-      }
-      return PopupMenuItem<String>(
-        value: routeName,
-        child: Text(
-          label,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            fontSize: targetFontSize,
-          ),
-        ),
-      );
-    }
-
-    // --- Function to create the TextButton Child for the Row ---
-    Widget buildRowButton(String label, String buttonRouteName) {
-      final bool isActive = currentRouteName == buttonRouteName;
-      final baseStyle = _getBaseTextStyle(
-          context, isActive, screenWidth); // Use the private helper
-      final textWidget = Text(label, style: baseStyle);
-
-      return TextButton(
-        onPressed: () {
-          if (buttonRouteName == AppRoutes.contact) {
-            _showContactUsPopup(context); // Show popup for Contact Us
-          } else if(buttonRouteName == AppRoutes.dashboard) {
-            if(AuthService.getCurrentUser() != null){
-              Navigator.pushNamed(context, buttonRouteName);
-            } else{
-               //pop up to prompt sign in
-              _showSignInPopup(context);
-            }
-
-          } else if (currentRouteName != buttonRouteName) {
-            // Avoid navigating if already on the current route
-            // For 'Home', clear the navigation stack to prevent back button issues
-            if (buttonRouteName == AppRoutes.home) {
-              Navigator.pushNamedAndRemoveUntil(
-                  context, buttonRouteName, (route) => false);
-            } else {
-              // For other routes, push the new route
-              Navigator.pushNamed(context, buttonRouteName);
-            }
-          }
-        },
-        child: _ActiveUnderlineWrapper(
-          isActive: isActive,
-          color: appBarForegroundColor,
-          thickness: 2.5,
-          underlineOffset: 4.0,
-          child: textWidget,
-        ),
-      );
-    }
-
-    return AppBar(
-      backgroundColor: appBarBackgroundColor,
-      elevation: 0,
-      title: screenWidth < mobileBreakpoint // Check for mobile breakpoint
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Hamburger menu button for small screens
-                PopupMenuButton<String>(
-                  icon: Icon(Icons.menu, color: appBarForegroundColor),
-                  onSelected: (String route) {
-                    if (route == AppRoutes.contact) {
-                      _showContactUsPopup(context); // Show popup for Contact Us
-                    } else if (currentRouteName != route) {
-                      if (route == AppRoutes.home) {
-                        Navigator.pushNamedAndRemoveUntil(
-                            context, route, (r) => false);
-                      } else {
-                        Navigator.pushNamed(context, route);
-                      }
-                    }
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<String>>[
-                    buildMenuItem('Home', AppRoutes.home),
-                    buildMenuItem('Reviews', AppRoutes.reviews),
-                    buildMenuItem('Product', AppRoutes.product_page),
-                    buildMenuItem('Dashboard', AppRoutes.dashboard),
-                    buildMenuItem('Sign In', AppRoutes.signin),
-                    buildMenuItem('Contact Us', AppRoutes.contact),
-                  ],
-                ),
-                // Theme toggle button for small screens
-                IconButton(
-                  icon: Icon(
-                    isDark ? Icons.light_mode : Icons.dark_mode,
-                    color: appBarForegroundColor,
-                  ),
-                  onPressed: toggleTheme,
-                  tooltip: 'Toggle Theme',
-                ),
-              ],
-            )
-          : Row(
-              // Row of TextButtons for wide screens
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                buildRowButton('Home', AppRoutes.home),
-                const SizedBox(width: 30.0),
-                buildRowButton('Reviews', AppRoutes.reviews),
-                const SizedBox(width: 30.0),
-                buildRowButton('Product', AppRoutes.product_page),
-                const SizedBox(width: 30.0),
-                buildRowButton(
-                    'Dashboard', AppRoutes.dashboard), // Fixed navigation here
-                const SizedBox(width: 30.0),
-                buildRowButton('Sign In', AppRoutes.signin),
-                const SizedBox(width: 30.0),
-                buildRowButton(
-                    'Contact Us', AppRoutes.contact), // Now opens popup
-                const SizedBox(width: 30.0),
-                // Theme toggle button for wide screens
-                IconButton(
-                  icon: Icon(
-                    isDark ? Icons.light_mode : Icons.dark_mode,
-                    color: appBarForegroundColor,
-                  ),
-                  onPressed: toggleTheme,
-                  tooltip: 'Toggle Theme',
-                ),
-              ],
-            ),
-    );
-  }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 10);
 }
 
-// --- Private Helper Widget for Conditional Underlining ---
-class _ActiveUnderlineWrapper extends StatelessWidget {
-  final bool isActive;
-  final Widget child;
-  final Color color;
-  final double thickness;
-  final double underlineOffset;
+class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
+  late AnimationController _hoverController;
+  String _hoveredButton = '';
 
-  const _ActiveUnderlineWrapper({
-    required this.isActive,
-    required this.child,
-    required this.color,
-    this.thickness = 2.5,
-    this.underlineOffset = 3.0,
-  });
+  @override
+  void initState() {
+    super.initState();
+    _hoverController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _hoverController.dispose();
+    super.dispose();
+  }
+
+  // --- Helper Method for modern text style with enhanced typography ---
+  TextStyle _getModernTextStyle(
+      BuildContext context, bool isActive, bool isHovered, double screenWidth) {
+    final Color? foregroundColor =
+        Theme.of(context).appBarTheme.foregroundColor;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // --- Enhanced Responsive Font Size Logic ---
+    double targetFontSize;
+    if (screenWidth < 400) {
+      targetFontSize = 14.0;
+    } else if (screenWidth < 600) {
+      targetFontSize = 15.0;
+    } else if (screenWidth < 900) {
+      targetFontSize = 16.0;
+    } else if (screenWidth < 1200) {
+      targetFontSize = 17.0;
+    } else {
+      targetFontSize = 18.0;
+    }
+
+    return TextStyle(
+      color: isActive
+          ? (isDark ? Colors.white : Colors.white)
+          : (isHovered
+          ? (isDark ? Colors.white.withOpacity(0.9) : Colors.white.withOpacity(0.9))
+          : (foregroundColor ?? Colors.white).withOpacity(0.8)),
+      fontWeight: isActive ? FontWeight.w600 : (isHovered ? FontWeight.w500 : FontWeight.w400),
+      fontSize: targetFontSize,
+      letterSpacing: 0.5,
+    );
+  }
+
+  // --- Enhanced Contact Us popup with modern design ---
+  void _showContactUsPopup(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: screenWidth > 600 ? screenWidth * 0.4 : screenWidth * 0.85,
+            constraints: BoxConstraints(
+              maxWidth: screenWidth > 600 ? screenWidth * 0.4 : screenWidth * 0.85,
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                  Colors.grey[900]!.withOpacity(0.95),
+                  Colors.grey[800]!.withOpacity(0.95),
+                ]
+                    : [
+                  Colors.white.withOpacity(0.95),
+                  Colors.grey[50]!.withOpacity(0.95),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.1),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Contact title with gradient
+                    ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) => currentGradient.createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                      ),
+                      child: Text(
+                        'Contact Us',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: screenWidth > 600 ? 28 : 24,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Contact info cards
+                    _buildContactCard(
+                      Icons.email_outlined,
+                      'Email',
+                      'support@example.com',
+                      screenWidth,
+                      isDark,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildContactCard(
+                      Icons.phone_outlined,
+                      'Phone',
+                      '+1 (123) 456-7890',
+                      screenWidth,
+                      isDark,
+                    ),
+                    const SizedBox(height: 32),
+                    // Close button with gradient
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: currentGradient,
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: [
+                          BoxShadow(
+                            color: currentGradient.colors.first.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        child: Text(
+                          'Close',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildContactCard(IconData icon, String title, String info, double screenWidth, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: AppTheme.getDefaultGradient(context),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  info,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.7)
+                        : Colors.black.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Enhanced Sign In popup ---
+  void _showSignInPopup(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: screenWidth > 600 ? screenWidth * 0.4 : screenWidth * 0.85,
+            constraints: BoxConstraints(
+              maxWidth: screenWidth > 600 ? screenWidth * 0.4 : screenWidth * 0.85,
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                  Colors.grey[900]!.withOpacity(0.95),
+                  Colors.grey[800]!.withOpacity(0.95),
+                ]
+                    : [
+                  Colors.white.withOpacity(0.95),
+                  Colors.grey[50]!.withOpacity(0.95),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.1),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Lock icon with gradient background
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: currentGradient,
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: const Icon(
+                        Icons.lock_outline,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Authentication Required',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: screenWidth > 600 ? 24 : 20,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : Colors.black87,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'You need to sign in to access the dashboard and unlock all features.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.7)
+                            : Colors.black.withOpacity(0.6),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: currentGradient,
+                              borderRadius: BorderRadius.circular(25),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: currentGradient.colors.first.withOpacity(0.3),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                Navigator.pushNamed(context, AppRoutes.signin);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                              ),
+                              child: Text(
+                                'Sign In',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Colors.black.withOpacity(0.6),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (!isActive) {
-      return child;
-    }
-    return Container(
-      padding: EdgeInsets.only(bottom: underlineOffset),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: color,
-            width: thickness,
+    final double screenWidth = MediaQuery.of(context).size.width;
+    const double mobileBreakpoint = 850;
+
+    final String? currentRouteName = ModalRoute.of(context)?.settings.name;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    // Modern navigation button builder
+    Widget buildModernNavButton(String label, String buttonRouteName, {IconData? icon}) {
+      final bool isActive = currentRouteName == buttonRouteName;
+      final bool isHovered = _hoveredButton == buttonRouteName;
+
+      return MouseRegion(
+        onEnter: (_) => setState(() => _hoveredButton = buttonRouteName),
+        onExit: (_) => setState(() => _hoveredButton = ''),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: isActive ? currentGradient : null,
+            color: isActive
+                ? null
+                : (isHovered
+                ? Colors.white.withOpacity(0.1)
+                : Colors.transparent),
+            borderRadius: BorderRadius.circular(25),
+            border: isHovered && !isActive
+                ? Border.all(color: Colors.white.withOpacity(0.2), width: 1)
+                : null,
+            boxShadow: isActive ? [
+              BoxShadow(
+                color: currentGradient.colors.first.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ] : null,
+          ),
+          child: TextButton(
+            onPressed: () {
+              if (buttonRouteName == AppRoutes.contact) {
+                _showContactUsPopup(context);
+              } else if (buttonRouteName == AppRoutes.dashboard) {
+                if (AuthService.getCurrentUser() != null) {
+                  Navigator.pushNamed(context, buttonRouteName);
+                } else {
+                  _showSignInPopup(context);
+                }
+              } else if (currentRouteName != buttonRouteName) {
+                if (buttonRouteName == AppRoutes.home) {
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, buttonRouteName, (route) => false);
+                } else {
+                  Navigator.pushNamed(context, buttonRouteName);
+                }
+              }
+            },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: isActive
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.8),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  label,
+                  style: _getModernTextStyle(context, isActive, isHovered, screenWidth),
+                ),
+              ],
+            ),
           ),
         ),
+      );
+    }
+
+    // Enhanced mobile menu item builder
+    PopupMenuItem<String> buildModernMenuItem(String label, String routeName, {IconData? icon}) {
+      final bool isActive = currentRouteName == routeName;
+      final Color textColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black;
+
+      return PopupMenuItem<String>(
+        value: routeName,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: isActive ? currentGradient : null,
+                    color: isActive ? null : Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: isActive ? Colors.white : textColor.withOpacity(0.7),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  fontSize: 16,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? [
+            Colors.black.withOpacity(0.8),
+            Colors.black.withOpacity(0.6),
+          ]
+              : [
+            Colors.black.withOpacity(0.7),
+            Colors.black.withOpacity(0.5),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: child,
+      child: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: screenWidth < mobileBreakpoint
+            ? Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Enhanced hamburger menu
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.menu_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                color: isDark
+                    ? Colors.grey[900]
+                    : Colors.white,
+                elevation: 20,
+                onSelected: (String route) {
+                  if (route == AppRoutes.contact) {
+                    _showContactUsPopup(context);
+                  } else if (route == AppRoutes.dashboard) {
+                    if (AuthService.getCurrentUser() != null) {
+                      Navigator.pushNamed(context, route);
+                    } else {
+                      _showSignInPopup(context);
+                    }
+                  } else if (currentRouteName != route) {
+                    if (route == AppRoutes.home) {
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, route, (r) => false);
+                    } else {
+                      Navigator.pushNamed(context, route);
+                    }
+                  }
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  buildModernMenuItem('Home', AppRoutes.home, icon: Icons.home_outlined),
+                  buildModernMenuItem('Product', AppRoutes.product_page, icon: Icons.shopping_bag_outlined),
+                  buildModernMenuItem('Dashboard', AppRoutes.dashboard, icon: Icons.dashboard_outlined),
+                  buildModernMenuItem('Sign In', AppRoutes.signin, icon: Icons.login_outlined),
+                  buildModernMenuItem('Contact Us', AppRoutes.contact, icon: Icons.contact_support_outlined),
+                ],
+              ),
+            ),
+            // Enhanced theme toggle
+            Container(
+              decoration: BoxDecoration(
+                gradient: currentGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: currentGradient.colors.first.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+                onPressed: widget.toggleTheme,
+                tooltip: 'Toggle Theme',
+              ),
+            ),
+          ],
+        )
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            buildModernNavButton('Home', AppRoutes.home),
+            buildModernNavButton('Product', AppRoutes.product_page),
+            buildModernNavButton('Dashboard', AppRoutes.dashboard),
+            buildModernNavButton('Sign In', AppRoutes.signin),
+            buildModernNavButton('Contact Us', AppRoutes.contact),
+            const SizedBox(width: 20),
+            // Enhanced theme toggle for desktop
+            Container(
+              decoration: BoxDecoration(
+                gradient: currentGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: currentGradient.colors.first.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: widget.toggleTheme,
+                tooltip: 'Toggle Theme',
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

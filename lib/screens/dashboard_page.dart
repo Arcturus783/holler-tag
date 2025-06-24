@@ -18,7 +18,7 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage> with TickerProviderStateMixin {
   // Placeholder data for user information
   String _userName = AuthService.getCurrentUser()!.displayName ?? '';
   String _userEmail = AuthService.getCurrentUser()!.email ?? '';
@@ -57,6 +57,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final List<Map<String, String>> _activeAnimalTags = [
     {'tagName': 'Buddy (Dog)', 'qrCode': 'QR12345', 'status': 'Active'},
     {'tagName': 'Whiskers (Cat)', 'qrCode': 'QR67890', 'status': 'Active'},
+    {'tagName': 'Charlie (Bird)', 'qrCode': 'QR54321', 'status': 'Active'},
   ];
 
   // Placeholder for credit card information
@@ -64,7 +65,13 @@ class _DashboardPageState extends State<DashboardPage> {
   String _creditCardExpiry = '12/26';
   String _creditCardHolder = 'John Doe';
 
-  // --- Controllers for editable fields ---
+  // Animation controllers
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Controllers for editable fields
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _addressLine1Controller;
@@ -77,16 +84,48 @@ class _DashboardPageState extends State<DashboardPage> {
   late TextEditingController _cardExpiryController;
   late TextEditingController _cardHolderController;
 
+  // Expansion state for settings section
+  bool _isSettingsExpanded = false;
+
   @override
   void initState() {
     super.initState();
+
+    // Initialize animation controllers
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Start animations
+    _fadeController.forward();
+    _slideController.forward();
+
     // Initialize controllers with current placeholder data
     _nameController = TextEditingController(text: _userName);
     _emailController = TextEditingController(text: _userEmail);
-    _addressLine1Controller =
-        TextEditingController(text: _shippingAddressLine1);
-    _addressLine2Controller =
-        TextEditingController(text: _shippingAddressLine2);
+    _addressLine1Controller = TextEditingController(text: _shippingAddressLine1);
+    _addressLine2Controller = TextEditingController(text: _shippingAddressLine2);
     _cityController = TextEditingController(text: _shippingCity);
     _stateController = TextEditingController(text: _shippingState);
     _zipCodeController = TextEditingController(text: _shippingZipCode);
@@ -98,6 +137,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+
     // Dispose controllers to prevent memory leaks
     _nameController.dispose();
     _emailController.dispose();
@@ -113,28 +155,322 @@ class _DashboardPageState extends State<DashboardPage> {
     super.dispose();
   }
 
-  // --- Helper to build a section title ---
-  Widget _buildSectionTitle(String title) {
+  // Helper to build a modern section title
+  Widget _buildSectionTitle(String title, {IconData? icon}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
+      padding: const EdgeInsets.only(bottom: 20.0, top: 10.0),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                gradient: _getGradient(),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.primary,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper to get gradient
+  LinearGradient _getGradient() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark
+        ? const LinearGradient(
+      colors: [Colors.indigo, Colors.deepPurpleAccent],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    )
+        : const LinearGradient(
+      colors: [Color.fromARGB(255, 0, 217, 255), Color.fromARGB(255, 0, 255, 255)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Build modern pet tag card
+  Widget _buildPetTagCard(Map<String, String> tag, int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final lightColors = [
+      [const Color.fromARGB(255, 0, 217, 255), const Color.fromARGB(255, 0, 255, 255)],
+      [const Color.fromARGB(255, 0, 180, 255), const Color.fromARGB(255, 0, 217, 255)],
+      [const Color.fromARGB(255, 0, 255, 200), const Color.fromARGB(255, 0, 255, 255)],
+      [const Color.fromARGB(255, 100, 200, 255), const Color.fromARGB(255, 0, 217, 255)],
+      [const Color.fromARGB(255, 50, 230, 255), const Color.fromARGB(255, 0, 255, 255)],
+    ];
+
+    final darkColors = [
+      [Colors.indigo, Colors.deepPurpleAccent],
+      [Colors.indigo.shade800, Colors.indigo],
+      [Colors.deepPurple, Colors.deepPurpleAccent],
+      [Colors.indigo.shade700, Colors.deepPurple],
+      [Colors.deepPurpleAccent, Colors.indigo],
+    ];
+
+    final cardColors = isDark ? darkColors[index % darkColors.length] : lightColors[index % lightColors.length];
+
+
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: cardColors[0].withValues(alpha:0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: cardColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            children: [
+              // QR Code placeholder with modern styling
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha:0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.qr_code,
+                  size: 40,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(width: 20),
+
+              // Tag information
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tag['tagName']!,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha:0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        tag['qrCode']!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.greenAccent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          tag['status']!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Action button
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha:0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.more_vert,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // --- Helper to build a text input field ---
+  // Build order history card
+  Widget _buildOrderCard(Map<String, String> order) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Color statusColor;
+    switch (order['status']) {
+      case 'Delivered':
+        statusColor = isDark ? Colors.greenAccent : Colors.green;
+        break;
+      case 'Processing':
+        statusColor = isDark ? Colors.orangeAccent : Colors.orange;
+        break;
+      case 'Shipped':
+        statusColor = isDark ? const Color.fromARGB(255, 0, 217, 255) : Colors.blue;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.indigo.withValues(alpha:0.3)
+                : const Color.fromARGB(255, 0, 217, 255).withValues(alpha:0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha:0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.shopping_bag_outlined,
+              color: statusColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  order['orderId']!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  order['date']!,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha:0.7),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha:0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  order['status']!,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                order['total']!,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper to build a text input field with modern styling
   Widget _buildTextField({
     required TextEditingController controller,
     required String labelText,
     String? hintText,
     TextInputType keyboardType = TextInputType.text,
-    bool readOnly = false, // Added for non-editable fields if needed
+    bool readOnly = false,
     void Function(String)? onChanged,
   }) {
     return Padding(
@@ -144,18 +480,28 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: InputDecoration(
           labelText: labelText,
           hintText: hintText,
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.surface,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withValues(alpha:0.5),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
+            borderRadius: BorderRadius.circular(12.0),
             borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.secondary,
+              color: Theme.of(context).colorScheme.primary,
               width: 2.0,
             ),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         ),
         keyboardType: keyboardType,
         readOnly: readOnly,
@@ -166,591 +512,497 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine screen width for responsive layout
     final double screenWidth = MediaQuery.of(context).size.width;
-    const double breakpoint = 900.0; // Define your breakpoint for two columns
+    const double breakpoint = 900.0;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your Dashboard'),
+        title: const Text('Dashboard'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(
+              Theme.of(context).brightness == Brightness.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
+            onPressed: widget.toggleTheme,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          // This Column is now the single child of SingleChildScrollView
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            screenWidth > breakpoint
-                ? Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start, // Align content to the top
-                    children: [
-                      // --- Left Column (now Active Animal Tags and Order History) ---
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                              right: 16.0), // Add spacing between columns
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Active Animal Tags Section (now first)
-                              _buildSectionTitle('Active Animal Tags'),
-                              _activeAnimalTags.isEmpty
-                                  ? const Text('No active animal tags found.')
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: _activeAnimalTags.length,
-                                      itemBuilder: (context, index) {
-                                        final tag = _activeAnimalTags[index];
-                                        return Card(
-                                          margin: const EdgeInsets.symmetric(
-                                              vertical: 8.0),
-                                          elevation: 2,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10.0),
-                                            side: BorderSide(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .outline, // Use outline color for border
-                                              width:
-                                                  1.0, // Thicker border for better visibility
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(12.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Tag Name: ${tag['tagName']}',
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                                Text(
-                                                    'QR Code: ${tag['qrCode']} (Placeholder)'),
-                                                Text(
-                                                    'Status: ${tag['status']}'),
-                                                // Placeholder for QR code image
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          top: 8.0),
-                                                  child: Container(
-                                                    width: 80,
-                                                    height: 80,
-                                                    color: Colors.grey[300],
-                                                    child: const Center(
-                                                      child: Icon(Icons.qr_code,
-                                                          size: 40,
-                                                          color: Colors.grey),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                              const SizedBox(height: 20),
-
-                              // Order History Section (now second)
-                              _buildSectionTitle('Order History'),
-                              _orderHistory.isEmpty
-                                  ? const Text('No past orders found.')
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: _orderHistory.length,
-                                      itemBuilder: (context, index) {
-                                        final order = _orderHistory[index];
-                                        return Card(
-                                          margin: const EdgeInsets.symmetric(
-                                              vertical: 8.0),
-                                          elevation: 2,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10.0),
-                                            side: BorderSide(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .outline, // Use outline color for border
-                                              width:
-                                                  1.0, // Thicker border for better visibility
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(12.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Order ID: ${order['orderId']}',
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                                Text('Date: ${order['date']}'),
-                                                Text(
-                                                    'Status: ${order['status']}'),
-                                                Align(
-                                                  alignment:
-                                                      Alignment.bottomRight,
-                                                  child: Text(
-                                                    'Total: ${order['total']}',
-                                                    style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 16),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                              const SizedBox(height: 20),
-                            ],
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Welcome section
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      gradient: _getGradient(),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha:0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Welcome back,',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
+                        ),
+                        Text(
+                          _userName.isNotEmpty ? _userName : 'User',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha:0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${_activeAnimalTags.length} Active Tags',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha:0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${_orderHistory.length} Orders',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Main content
+                  screenWidth > breakpoint
+                      ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left column - Pet Tags (featured)
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSectionTitle('Your Pet Tags', icon: Icons.pets),
+                            _activeAnimalTags.isEmpty
+                                ? _buildEmptyState('No active pet tags found.', 'Add your first pet tag to get started!')
+                                : Column(
+                              children: _activeAnimalTags.asMap().entries.map((entry) {
+                                return _buildPetTagCard(entry.value, entry.key);
+                              }).toList(),
+                            ),
+
+                            const SizedBox(height: 32),
+                            _buildSectionTitle('Recent Orders', icon: Icons.history),
+                            _orderHistory.isEmpty
+                                ? _buildEmptyState('No orders found.', 'Your order history will appear here.')
+                                : Column(
+                              children: _orderHistory.map((order) => _buildOrderCard(order)).toList(),
+                            ),
+                          ],
                         ),
                       ),
 
-                      // --- Right Column (User Info, Shipping, and Credit Card) ---
+                      const SizedBox(width: 32),
+
+                      // Right column - Settings
                       Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                              left: 16.0), // Add spacing between columns
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // User Information Section
-                              _buildSectionTitle('User Information'),
-                              _buildTextField(
-                                controller: _nameController,
-                                labelText: 'Name',
-                                hintText: 'Enter your full name',
-                                onChanged: (value) {
-                                  setState(() {
-                                    _userName = value;
-                                  });
-                                },
-                              ),
-                              _buildTextField(
-                                controller: _emailController,
-                                labelText: 'Email',
-                                hintText: 'Enter your email address',
-                                keyboardType: TextInputType.emailAddress,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _userEmail = value;
-                                  });
-                                },
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Shipping Information Section
-                              _buildSectionTitle('Shipping Information'),
-                              _buildTextField(
-                                controller: _addressLine1Controller,
-                                labelText: 'Address Line 1',
-                                hintText: 'e.g., 123 Main St',
-                                onChanged: (value) => setState(
-                                    () => _shippingAddressLine1 = value),
-                              ),
-                              _buildTextField(
-                                controller: _addressLine2Controller,
-                                labelText: 'Address Line 2 (Optional)',
-                                hintText: 'e.g., Apt 4B',
-                                onChanged: (value) => setState(
-                                    () => _shippingAddressLine2 = value),
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: _cityController,
-                                      labelText: 'City',
-                                      hintText: 'e.g., Anytown',
-                                      onChanged: (value) =>
-                                          setState(() => _shippingCity = value),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: _stateController,
-                                      labelText: 'State/Province',
-                                      hintText: 'e.g., NY',
-                                      onChanged: (value) => setState(
-                                          () => _shippingState = value),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: _zipCodeController,
-                                      labelText: 'Zip/Postal Code',
-                                      hintText: 'e.g., 12345',
-                                      keyboardType: TextInputType.number,
-                                      onChanged: (value) => setState(
-                                          () => _shippingZipCode = value),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: _countryController,
-                                      labelText: 'Country',
-                                      hintText: 'e.g., USA',
-                                      onChanged: (value) => setState(
-                                          () => _shippingCountry = value),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Credit Card Information Section
-                              _buildSectionTitle('Credit Card Information'),
-                              _buildTextField(
-                                controller: _cardNumberController,
-                                labelText: 'Card Number',
-                                hintText: '**** **** **** 1234',
-                                keyboardType: TextInputType.number,
-                                readOnly:
-                                    true, // Typically, full card numbers are not edited directly
-                                onChanged: (value) =>
-                                    setState(() => _creditCardNumber = value),
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: _cardExpiryController,
-                                      labelText: 'Expiry Date',
-                                      hintText: 'MM/YY',
-                                      keyboardType: TextInputType.datetime,
-                                      onChanged: (value) => setState(
-                                          () => _creditCardExpiry = value),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: _cardHolderController,
-                                      labelText: 'Cardholder Name',
-                                      hintText: 'John Doe',
-                                      onChanged: (value) => setState(
-                                          () => _creditCardHolder = value),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 30),
-                            ],
-                          ),
-                        ),
+                        child: _buildSettingsPanel(),
                       ),
                     ],
                   )
-                : // --- Single Column Layout (for smaller screens) ---
-                Column(
+                      : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Active Animal Tags Section (now first)
-                      _buildSectionTitle('Active Animal Tags'),
+                      // Pet Tags section (mobile)
+                      _buildSectionTitle('Your Pet Tags', icon: Icons.pets),
                       _activeAnimalTags.isEmpty
-                          ? const Text('No active animal tags found.')
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _activeAnimalTags.length,
-                              itemBuilder: (context, index) {
-                                final tag = _activeAnimalTags[index];
-                                return Card(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                    side: BorderSide(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline, // Use outline color for border
-                                      width:
-                                          1.0, // Thicker border for better visibility
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Tag Name: ${tag['tagName']}',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                            'QR Code: ${tag['qrCode']} (Placeholder)'),
-                                        Text('Status: ${tag['status']}'),
-                                        // Placeholder for QR code image
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 8.0),
-                                          child: Container(
-                                            width: 80,
-                                            height: 80,
-                                            color: Colors.grey[300],
-                                            child: const Center(
-                                              child: Icon(Icons.qr_code,
-                                                  size: 40, color: Colors.grey),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                      const SizedBox(height: 20),
+                          ? _buildEmptyState('No active pet tags found.', 'Add your first pet tag to get started!')
+                          : Column(
+                        children: _activeAnimalTags.asMap().entries.map((entry) {
+                          return _buildPetTagCard(entry.value, entry.key);
+                        }).toList(),
+                      ),
 
-                      // Order History Section (now second)
-                      _buildSectionTitle('Order History'),
+                      const SizedBox(height: 32),
+                      _buildSectionTitle('Recent Orders', icon: Icons.history),
                       _orderHistory.isEmpty
-                          ? const Text('No past orders found.')
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _orderHistory.length,
-                              itemBuilder: (context, index) {
-                                final order = _orderHistory[index];
-                                return Card(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                    side: BorderSide(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline, // Use outline color for border
-                                      width:
-                                          1.0, // Thicker border for better visibility
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Order ID: ${order['orderId']}',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text('Date: ${order['date']}'),
-                                        Text('Status: ${order['status']}'),
-                                        Align(
-                                          alignment: Alignment.bottomRight,
-                                          child: Text(
-                                            'Total: ${order['total']}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                      const SizedBox(height: 20),
+                          ? _buildEmptyState('No orders found.', 'Your order history will appear here.')
+                          : Column(
+                        children: _orderHistory.map((order) => _buildOrderCard(order)).toList(),
+                      ),
 
-                      // User Information Section
-                      _buildSectionTitle('User Information'),
-                      _buildTextField(
-                        controller: _nameController,
-                        labelText: 'Name',
-                        hintText: 'Enter your full name',
-                        onChanged: (value) {
-                          setState(() {
-                            _userName = value;
-                          });
-                        },
-                      ),
-                      _buildTextField(
-                        controller: _emailController,
-                        labelText: 'Email',
-                        hintText: 'Enter your email address',
-                        keyboardType: TextInputType.emailAddress,
-                        onChanged: (value) {
-                          setState(() {
-                            _userEmail = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Shipping Information Section
-                      _buildSectionTitle('Shipping Information'),
-                      _buildTextField(
-                        controller: _addressLine1Controller,
-                        labelText: 'Address Line 1',
-                        hintText: 'e.g., 123 Main St',
-                        onChanged: (value) =>
-                            setState(() => _shippingAddressLine1 = value),
-                      ),
-                      _buildTextField(
-                        controller: _addressLine2Controller,
-                        labelText: 'Address Line 2 (Optional)',
-                        hintText: 'e.g., Apt 4B',
-                        onChanged: (value) =>
-                            setState(() => _shippingAddressLine2 = value),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildTextField(
-                              controller: _cityController,
-                              labelText: 'City',
-                              hintText: 'e.g., Anytown',
-                              onChanged: (value) =>
-                                  setState(() => _shippingCity = value),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildTextField(
-                              controller: _stateController,
-                              labelText: 'State/Province',
-                              hintText: 'e.g., NY',
-                              onChanged: (value) =>
-                                  setState(() => _shippingState = value),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildTextField(
-                              controller: _zipCodeController,
-                              labelText: 'Zip/Postal Code',
-                              hintText: 'e.g., 12345',
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) =>
-                                  setState(() => _shippingZipCode = value),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildTextField(
-                              controller: _countryController,
-                              labelText: 'Country',
-                              hintText: 'e.g., USA',
-                              onChanged: (value) =>
-                                  setState(() => _shippingCountry = value),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Credit Card Information Section
-                      _buildSectionTitle('Credit Card Information'),
-                      _buildTextField(
-                        controller: _cardNumberController,
-                        labelText: 'Card Number',
-                        hintText: '**** **** **** 1234',
-                        keyboardType: TextInputType.number,
-                        readOnly:
-                            true, // Typically, full card numbers are not edited directly
-                        onChanged: (value) =>
-                            setState(() => _creditCardNumber = value),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildTextField(
-                              controller: _cardExpiryController,
-                              labelText: 'Expiry Date',
-                              hintText: 'MM/YY',
-                              keyboardType: TextInputType.datetime,
-                              onChanged: (value) =>
-                                  setState(() => _creditCardExpiry = value),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildTextField(
-                              controller: _cardHolderController,
-                              labelText: 'Cardholder Name',
-                              hintText: 'John Doe',
-                              onChanged: (value) =>
-                                  setState(() => _creditCardHolder = value),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 32),
+                      _buildSettingsPanel(),
                     ],
                   ),
-            // Placeholder for Save Button - remains outside the conditional layout
-            Align(
-              alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // In a real app, this would trigger saving data to a backend
-                    print('Saving data...');
-                    print('User Name: $_userName');
-                    print('Shipping Address: $_shippingAddressLine1');
-                    // Add other data to print for demonstration
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Profile updated! (Placeholder)'),
-                        backgroundColor: Theme.of(context).colorScheme.primary,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String title, String subtitle) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 48,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha:0.7),
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsPanel() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withValues(alpha:0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Settings header
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isSettingsExpanded = !_isSettingsExpanded;
+              });
+            },
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: Container(
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
+                gradient: _getGradient(),
+                borderRadius: _isSettingsExpanded
+                    ? const BorderRadius.vertical(top: Radius.circular(20))
+                    : BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.settings, color: Colors.white, size: 24),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Account Settings',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Icon(
+                    _isSettingsExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Expandable settings content
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: _isSettingsExpanded ? null : 0,
+            child: _isSettingsExpanded ? _buildSettingsContent() : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsContent() {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // User Information Section
+          const Text(
+            'Personal Information',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: _nameController,
+            labelText: 'Full Name',
+            hintText: 'Enter your full name',
+            onChanged: (value) {
+              setState(() {
+                _userName = value;
+              });
+            },
+          ),
+          _buildTextField(
+            controller: _emailController,
+            labelText: 'Email Address',
+            hintText: 'Enter your email address',
+            keyboardType: TextInputType.emailAddress,
+            onChanged: (value) {
+              setState(() {
+                _userEmail = value;
+              });
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Shipping Information Section
+          const Text(
+            'Shipping Address',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: _addressLine1Controller,
+            labelText: 'Address Line 1',
+            hintText: 'e.g., 123 Main St',
+            onChanged: (value) => setState(() => _shippingAddressLine1 = value),
+          ),
+          _buildTextField(
+            controller: _addressLine2Controller,
+            labelText: 'Address Line 2 (Optional)',
+            hintText: 'e.g., Apt 4B',
+            onChanged: (value) => setState(() => _shippingAddressLine2 = value),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _cityController,
+                  labelText: 'City',
+                  hintText: 'e.g., Anytown',
+                  onChanged: (value) => setState(() => _shippingCity = value),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildTextField(
+                  controller: _stateController,
+                  labelText: 'State/Province',
+                  hintText: 'e.g., NY',
+                  onChanged: (value) => setState(() => _shippingState = value),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _zipCodeController,
+                  labelText: 'Zip/Postal Code',
+                  hintText: 'e.g., 12345',
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => setState(() => _shippingZipCode = value),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildTextField(
+                  controller: _countryController,
+                  labelText: 'Country',
+                  hintText: 'e.g., USA',
+                  onChanged: (value) => setState(() => _shippingCountry = value),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Credit Card Information Section
+          const Text(
+            'Payment Information',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: _cardNumberController,
+            labelText: 'Card Number',
+            hintText: '**** **** **** 1234',
+            keyboardType: TextInputType.number,
+            readOnly: true,
+            onChanged: (value) => setState(() => _creditCardNumber = value),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _cardExpiryController,
+                  labelText: 'Expiry Date',
+                  hintText: 'MM/YY',
+                  keyboardType: TextInputType.datetime,
+                  onChanged: (value) => setState(() => _creditCardExpiry = value),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildTextField(
+                  controller: _cardHolderController,
+                  labelText: 'Cardholder Name',
+                  hintText: 'John Doe',
+                  onChanged: (value) => setState(() => _creditCardHolder = value),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          // Save button
+          SizedBox(
+            width: double.infinity,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: _getGradient(),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.indigo.withValues(alpha:0.3)
+                        : const Color.fromARGB(255, 0, 217, 255).withValues(alpha:0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  // In a real app, this would trigger saving data to a backend
+                  print('Saving data...');
+                  print('User Name: $_userName');
+                  print('Shipping Address: $_shippingAddressLine1');
+                  // Add other data to print for demonstration
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Profile updated successfully!'),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Save Changes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

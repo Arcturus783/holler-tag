@@ -12,6 +12,14 @@ import 'package:myapp/elements/image_cropper_popup.dart';
 
 import 'package:myapp/backend/google_auth.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'package:file_saver/file_saver.dart';
+
+import 'package:barcode/barcode.dart';
+
 class ProductPage extends StatelessWidget {
   final VoidCallback toggleTheme;
 
@@ -512,6 +520,7 @@ class ProductPage extends StatelessWidget {
                 onChanged: (text) => _nameController.value = text,
                 decoration: InputDecoration(
                   hintText: 'Enter your name',
+                  hintStyle: TextStyle(color: Colors.grey[600]), // Custom grey color
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: primaryColor),
@@ -523,6 +532,7 @@ class ProductPage extends StatelessWidget {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               );
+
             },
           ),
           
@@ -545,6 +555,7 @@ class ProductPage extends StatelessWidget {
                 maxLines: 2,
                 decoration: InputDecoration(
                   hintText: 'Enter your address',
+                  hintStyle: TextStyle(color: Colors.grey[600]),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: primaryColor),
@@ -578,6 +589,7 @@ class ProductPage extends StatelessWidget {
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   hintText: 'Enter your phone number',
+                    hintStyle: TextStyle(color: Colors.grey[600]),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: primaryColor),
@@ -618,7 +630,8 @@ class ProductPage extends StatelessWidget {
                     maxLines: 3,
                     maxLength: 200,
                     decoration: InputDecoration(
-                      hintText: 'Enter any additional information',
+                      hintText: 'Enter any additional information for your pet\'s tag',
+                      hintStyle: TextStyle(color: Colors.grey[600]),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: primaryColor),
@@ -660,6 +673,7 @@ class ProductPage extends StatelessWidget {
               onPressed: () {
                 if (AuthService.getCurrentUser() != null) {
                   //continue with payment
+                  createNewProductTag(address: _addressController.value, description: _additionalInfoController.value, yourBaseDomain: 'hollertag.com', phoneNumber: _phoneController.value);
                 } else {
                   AuthService.signInWithGoogle();
 
@@ -701,6 +715,51 @@ class ProductPage extends StatelessWidget {
       ),
     );
   }
+
+  void createNewProductTag({
+    required String address,
+    required String description,
+    required String phoneNumber,
+    required String yourBaseDomain, // New parameter for your domain
+  }) async {
+    try {
+      // 1. Get the authenticated user's ID
+      final User? currentUser = AuthService.getCurrentUser();
+
+      if (currentUser == null) {
+        throw Exception('User not authenticated. Please log in to create a tag.');
+      }
+
+      final String ownerId = currentUser.uid;
+
+      // 2. Prepare the data for the new document
+      final Map<String, dynamic> newTagData = {
+        'Address': address,
+        'Description': description,
+        'Phone Number': phoneNumber,
+        'ownerId': ownerId,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      // 3. Add the document to the "tags" collection
+      DocumentReference documentRef =
+      await FirebaseFirestore.instance.collection('tags').add(newTagData);
+
+      final String newProductId = documentRef.id;
+      print('Successfully created new product tag with ID: $newProductId');
+
+
+      final String productUrl = 'https://$yourBaseDomain/products/$newProductId';
+      final dm = Barcode.qrCode();
+      final svg = dm.toSvg(productUrl, width:200, height: 200);
+      await File('barcode.svg').writeAsString(svg);
+
+    } catch (e) {
+      print('Error in createNewProductTag: $e');
+      rethrow; // Re-throw the exception for handling in the UI
+    }
+  }
+
 
 // Updated image picker dialog function
 

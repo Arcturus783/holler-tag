@@ -120,7 +120,12 @@ class HomePage extends StatefulWidget {
 }
 
 // IMPORTANT: This class contains the UI code for your HomePage
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   // Image lists for carousel, responsive to screen size and theme
   final List<String> _lightImageListLarge = [
     'assets/images/Neues-Macbook-Pro-hat-Power-und-Ports.jpg',
@@ -153,6 +158,46 @@ class _HomePageState extends State<HomePage> {
   final String _darkBackgroundImage = 'assets/images/download (1).jpg';
 
   @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Start animations
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Get media query data for responsive sizing
     MediaQueryData queryData = MediaQuery.of(context);
@@ -162,53 +207,38 @@ class _HomePageState extends State<HomePage> {
     // Calculate available vertical space for the carousel
     double availableHeightForCarousel = screenHeight - appBarHeight;
 
-    // Define base font sizes and padding for scaling
-    double baseTitleFontSize = 25.0;
-    double baseSubtitleFontSize = 15.0;
-    double baseButtonPaddingVertical = 10.0;
-    double baseButtonPaddingHorizontal = 20.0;
-
-    // Calculate scaling factor for dynamic font sizes and padding
-    double baseCarouselHeight = 200.0; // Reference height for scaling
-    double scaleFactor = availableHeightForCarousel > 0
-        ? availableHeightForCarousel / baseCarouselHeight
-        : 1.0;
-    // Clamp scale factor to prevent too small or too large text/buttons
-    if (scaleFactor < 0.8) scaleFactor = 0.8;
-    if (scaleFactor > 1.2) scaleFactor = 1.2;
-
-    // Apply scale factor to font sizes and padding
-    double titleFontSize = baseTitleFontSize * scaleFactor;
-    double subtitleFontSize = baseSubtitleFontSize * scaleFactor;
-    double buttonPaddingVertical = baseButtonPaddingVertical * scaleFactor;
-    double buttonPaddingHorizontal = baseButtonPaddingHorizontal * scaleFactor;
+    // Define responsive font sizes
+    double titleFontSize = screenWidth < 600 ? 32.0 : 48.0;
+    double subtitleFontSize = screenWidth < 600 ? 16.0 : 20.0;
+    double missionTitleSize = screenWidth < 600 ? 28.0 : 36.0;
+    double bodyTextSize = screenWidth < 600 ? 14.0 : 16.0;
 
     // Select image list based on screen width and current theme
     List<String> imageUrlsToUse;
     if (Theme.of(context).brightness == Brightness.dark) {
       imageUrlsToUse =
-          screenWidth >= 800 ? _darkImageListLarge : _darkImageListSmall;
+      screenWidth >= 800 ? _darkImageListLarge : _darkImageListSmall;
     } else {
       imageUrlsToUse =
-          screenWidth >= 800 ? _lightImageListLarge : _lightImageListSmall;
+      screenWidth >= 800 ? _lightImageListLarge : _lightImageListSmall;
     }
 
     // Select background image based on current theme
     final String currentBackgroundImage =
-        Theme.of(context).brightness == Brightness.dark
-            ? _darkBackgroundImage
-            : _lightBackgroundImage;
+    Theme.of(context).brightness == Brightness.dark
+        ? _darkBackgroundImage
+        : _lightBackgroundImage;
 
     // Get the current gradient from the app theme
     final currentGradient = AppTheme.getDefaultGradient(context);
-    final gradientStartColor = currentGradient.colors.first;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar:
-          MyAppBar(toggleTheme: widget.toggleTheme), // Use the custom AppBar
+      appBar: MyAppBar(toggleTheme: widget.toggleTheme),
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // Hero Section with enhanced overlay
             Stack(
               children: [
                 SizedBox(
@@ -219,185 +249,260 @@ class _HomePageState extends State<HomePage> {
                     maxHeight: availableHeightForCarousel,
                   ),
                 ),
+                // Enhanced gradient overlay
+                Container(
+                  width: double.infinity,
+                  height: availableHeightForCarousel,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.1),
+                        Colors.black.withOpacity(0.4),
+                        Colors.black.withOpacity(0.7),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                  ),
+                ),
+                // Hero content with animations
                 Positioned(
                   bottom: 0,
                   left: 0,
                   right: 0,
                   child: SizedBox(
                     height: availableHeightForCarousel > 0
-                        ? availableHeightForCarousel * 0.4
-                        : 100, // Adjust height based on available space
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: <Widget>[
-                        // Ignore pointer to allow taps on elements behind this transparent container
-                        IgnorePointer(
-                          ignoring: true,
-                          child: Container(
-                            width: double.infinity,
-                            color: Colors.transparent, // Transparent overlay
+                        ? availableHeightForCarousel * 0.5
+                        : 200,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.08,
+                            vertical: 40.0,
                           ),
-                        ),
-                        // Text and buttons for the main call to action
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 20.0),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text(
-                                "Holler Tag",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: titleFontSize,
-                                  fontWeight: FontWeight.bold,
+                            children: [
+                              // Brand title with enhanced typography
+                              ShaderMask(
+                                blendMode: BlendMode.srcIn,
+                                shaderCallback: (bounds) => currentGradient.createShader(
+                                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                                ),
+                                child: Text(
+                                  "Holler Tag",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: titleFontSize,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 2.0,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
+                              const SizedBox(height: 12),
+                              // Subtitle with better typography
                               Text(
                                 "Built for safety. Built to last.\nBuilt for you.",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: subtitleFontSize,
+                                  fontWeight: FontWeight.w300,
+                                  color: Colors.white.withOpacity(0.95),
+                                  height: 1.4,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: buttonPaddingVertical,
-                                  horizontal: buttonPaddingHorizontal,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    // "Register" button
-                                    CustomButton(
+                              const SizedBox(height: 32),
+                              // Enhanced button row
+                              Wrap(
+                                spacing: 16.0,
+                                runSpacing: 12.0,
+                                alignment: WrapAlignment.center,
+                                children: [
+                                  // Register button with gradient background
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: currentGradient,
+                                      borderRadius: BorderRadius.circular(30),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: currentGradient.colors.first.withOpacity(0.3),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ElevatedButton(
                                       onPressed: () {
                                         Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const QrTo3DApp(),
-                                            ));
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const QrTo3DApp(),
+                                          ),
+                                        );
                                       },
-                                      child: Text("Register",
-                                          style: TextStyle(
-                                              fontSize: subtitleFontSize)),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        shadowColor: Colors.transparent,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: screenWidth < 600 ? 32 : 40,
+                                          vertical: screenWidth < 600 ? 16 : 20,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "Register",
+                                        style: TextStyle(
+                                          fontSize: subtitleFontSize * 0.9,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          letterSpacing: 1.0,
+                                        ),
+                                      ),
                                     ),
-                                    const SizedBox(
-                                        width: 10.0), // Spacing between buttons
-                                    // "Shop Now" button
-                                    ElevatedButton(
+                                  ),
+                                  // Shop Now button with glass morphism effect
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.3),
+                                        width: 2,
+                                      ),
+                                      color: Colors.white.withOpacity(0.1),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ElevatedButton(
                                       onPressed: () {
-                                        // Navigate to the product page
-                                        Navigator.pushNamed(
-                                            context, AppRoutes.product_page);
+                                        Navigator.pushNamed(context, AppRoutes.product_page);
                                       },
-                                      style: ButtonStyle(
-                                        shadowColor:
-                                            WidgetStateProperty.all<Color>(
-                                                Colors.transparent),
-                                        foregroundColor: WidgetStateProperty
-                                            .resolveWith<Color>(
-                                          (Set<WidgetState> states) {
-                                            return gradientStartColor;
-                                          },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        shadowColor: Colors.transparent,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: screenWidth < 600 ? 32 : 40,
+                                          vertical: screenWidth < 600 ? 16 : 20,
                                         ),
-                                        backgroundColor:
-                                            WidgetStateProperty.all<Color>(
-                                                Colors.transparent),
-                                        side: WidgetStateProperty.resolveWith<
-                                                BorderSide>(
-                                            (Set<WidgetState> states) {
-                                          return BorderSide(
-                                            color: gradientStartColor,
-                                            width: 2.5,
-                                          );
-                                        }),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
                                       ),
-                                      child: ShaderMask(
-                                        blendMode: BlendMode.srcIn,
-                                        shaderCallback: (bounds) =>
-                                            currentGradient.createShader(
-                                          Rect.fromLTWH(0, 0, bounds.width,
-                                              bounds.height),
+                                      child: Text(
+                                        "Shop Now",
+                                        style: TextStyle(
+                                          fontSize: subtitleFontSize * 0.9,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          letterSpacing: 1.0,
                                         ),
-                                        child: Text("Shop Now",
-                                            style: TextStyle(
-                                                fontSize: subtitleFontSize,
-                                                color: Colors.white)),
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            // "Our Mission" section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(currentBackgroundImage),
-                    fit: BoxFit.cover,
-                  ),
-                  borderRadius: BorderRadius.circular(8.0),
+
+            // Mission Section with modern card design
+            Container(
+              margin: const EdgeInsets.all(20.0),
+              child: Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                padding: const EdgeInsets.all(16.0),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                        maxWidth: math.min(screenWidth * (2 / 3), 800.0)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Our Mission",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: subtitleFontSize * 1.5,
-                            fontWeight: FontWeight.bold,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    image: DecorationImage(
+                      image: AssetImage(currentBackgroundImage),
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(
+                        isDark
+                            ? Colors.black.withOpacity(0.6)
+                            : Colors.white.withOpacity(0.8),
+                        BlendMode.overlay,
+                      ),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withOpacity(0.3)
+                            : Colors.grey.withOpacity(0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    padding: EdgeInsets.all(screenWidth < 600 ? 24.0 : 48.0),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: math.min(screenWidth * 0.8, 800.0),
+                      ),
+                      child: Column(
+                        children: [
+                          // Mission title with gradient
+                          ShaderMask(
+                            blendMode: BlendMode.srcIn,
+                            shaderCallback: (bounds) => currentGradient.createShader(
+                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                            ),
+                            child: Text(
+                              "Our Mission",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: missionTitleSize,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.5,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        const Text(
-                          textAlign: TextAlign.center,
-                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                          style: TextStyle(
-                            fontSize: 16.0,
+                          const SizedBox(height: 32),
+                          // Mission content in cards
+                          _buildMissionCard(
+                            "Innovation & Safety",
+                            "We're committed to creating products that prioritize your safety without compromising on innovation. Every Holler Tag is designed with cutting-edge technology to protect what matters most.",
+                            bodyTextSize,
+                            isDark,
                           ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        const Text(
-                          textAlign: TextAlign.center,
-                          "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-                          style: TextStyle(
-                            fontSize: 16.0,
+                          const SizedBox(height: 20),
+                          _buildMissionCard(
+                            "Built to Last",
+                            "Durability is at the core of our design philosophy. Our products are engineered to withstand the test of time, ensuring reliable performance when you need it most.",
+                            bodyTextSize,
+                            isDark,
                           ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        const Text(
-                          textAlign: TextAlign.center,
-                          "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
-                          style: TextStyle(
-                            fontSize: 16.0,
+                          const SizedBox(height: 20),
+                          _buildMissionCard(
+                            "Personalized Experience",
+                            "We understand that every user is unique. That's why we've built our platform to adapt to your specific needs, providing a truly personalized experience that grows with you.",
+                            bodyTextSize,
+                            isDark,
                           ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        const Text(
-                          textAlign: TextAlign.center,
-                          "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.",
-                          style: TextStyle(
-                            fontSize: 16.0,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -405,6 +510,59 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMissionCard(String title, String content, double fontSize, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: fontSize * 1.2,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            content,
+            style: TextStyle(
+              fontSize: fontSize,
+              color: isDark
+                  ? Colors.white.withOpacity(0.8)
+                  : Colors.black.withOpacity(0.7),
+              height: 1.6,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
       ),
     );
   }

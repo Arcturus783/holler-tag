@@ -28,7 +28,9 @@ class ProductPage extends StatelessWidget {
   // Helper function to determine the background color based on the theme
 
   Color _getContainerBackgroundColor(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = Theme
+        .of(context)
+        .brightness == Brightness.dark;
 
     return isDarkMode
         ? const Color.fromARGB(255, 37, 37, 37)
@@ -39,11 +41,17 @@ class ProductPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get the primary color from the current theme
 
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final primaryColor = Theme
+        .of(context)
+        .colorScheme
+        .primary;
 
     // Check if the screen width is above 800 for responsive layout
 
-    bool isWideScreen = MediaQuery.of(context).size.width > 800;
+    bool isWideScreen = MediaQuery
+        .of(context)
+        .size
+        .width > 800;
 
     return Scaffold(
       appBar: MyAppBar(
@@ -105,7 +113,7 @@ class ProductPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
 
                 border:
-                    Border.all(color: primaryColor, width: 2.0), // Added border
+                Border.all(color: primaryColor, width: 2.0), // Added border
               ),
               child: _buildProductInfo(),
             ),
@@ -149,7 +157,7 @@ class ProductPage extends StatelessWidget {
   Widget _buildProductImage() {
     return Container(
       constraints:
-          const BoxConstraints(maxHeight: 400), // Max height for the image
+      const BoxConstraints(maxHeight: 400), // Max height for the image
 
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -187,8 +195,8 @@ class ProductPage extends StatelessWidget {
         const SizedBox(height: 16),
         const Text(
           'Meet the HollerTag, your once-stop shop for safety, style, and suave for your furry friend.'
-          'The QR code on the back allows people who find a lost pet to access the owner\'s information, if they have unlocked it.'
-          'Plus, thanks to advanced 3D printing, the HollerTag can be customized to the finest detail.',
+              'The QR code on the back allows people who find a lost pet to access the owner\'s information, if they have unlocked it.'
+              'Plus, thanks to advanced 3D printing, the HollerTag can be customized to the finest detail.',
           style: TextStyle(
             fontSize: 16,
             height: 1.5,
@@ -224,7 +232,8 @@ class ProductPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...specs.map((spec) => Padding(
+        ...specs.map((spec) =>
+            Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
                 children: [
@@ -244,7 +253,8 @@ class ProductPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCombinedCustomizationSection(BuildContext context, Color primaryColor) {
+  Widget _buildCombinedCustomizationSection(BuildContext context,
+      Color primaryColor) {
     final currentGradient = AppTheme.getDefaultGradient(context);
 
     final List<Color> colors = [
@@ -263,12 +273,13 @@ class ProductPage extends StatelessWidget {
     final ValueNotifier<Color?> _selectedColor = ValueNotifier<Color?>(null);
     final ValueNotifier<String?> _selectedSize = ValueNotifier<String?>(null);
     final ValueNotifier<XFile?> _selectedImage = ValueNotifier<XFile?>(null);
-    
+
     // Contact information controllers
     final ValueNotifier<String> _nameController = ValueNotifier<String>('');
     final ValueNotifier<String> _addressController = ValueNotifier<String>('');
     final ValueNotifier<String> _phoneController = ValueNotifier<String>('');
-    final ValueNotifier<String> _additionalInfoController = ValueNotifier<String>('');
+    final ValueNotifier<String> _additionalInfoController = ValueNotifier<
+        String>('');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -288,7 +299,7 @@ class ProductPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Product Customization Section
           const Text(
             'Select Color:',
@@ -358,7 +369,8 @@ class ProductPage extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
+          /*
           const Text(
             'Select Size:',
             style: TextStyle(fontWeight: FontWeight.bold),
@@ -493,7 +505,7 @@ class ProductPage extends StatelessWidget {
           ),
           
           const SizedBox(height: 32),
-          
+          */
           // Contact Information Section
           const Text(
             'Contact Information',
@@ -503,7 +515,7 @@ class ProductPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Required Name field
           const Text(
             'Name *',
@@ -520,7 +532,8 @@ class ProductPage extends StatelessWidget {
                 onChanged: (text) => _nameController.value = text,
                 decoration: InputDecoration(
                   hintText: 'Enter your name',
-                  hintStyle: TextStyle(color: Colors.grey[600]), // Custom grey color
+                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  // Custom grey color
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: primaryColor),
@@ -529,15 +542,15 @@ class ProductPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: primaryColor, width: 2),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
                 ),
               );
-
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Optional Address field
           const Text(
             'Address (Optional)',
@@ -564,14 +577,15 @@ class ProductPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: primaryColor, width: 2),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
                 ),
               );
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Optional Phone field
           const Text(
             'Phone Number (Optional)',
@@ -589,7 +603,7 @@ class ProductPage extends StatelessWidget {
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   hintText: 'Enter your phone number',
-                    hintStyle: TextStyle(color: Colors.grey[600]),
+                  hintStyle: TextStyle(color: Colors.grey[600]),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: primaryColor),
@@ -598,14 +612,15 @@ class ProductPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: primaryColor, width: 2),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
                 ),
               );
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Optional Additional Information field with character limit
           const Text(
             'Additional Information (Optional)',
@@ -640,7 +655,8 @@ class ProductPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: primaryColor, width: 2),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       counterText: '${value.length}/200',
                     ),
                   ),
@@ -648,9 +664,9 @@ class ProductPage extends StatelessWidget {
               );
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           const Text(
             'This information will be accessible via the QR code on your HollerTag.',
             style: TextStyle(
@@ -659,7 +675,7 @@ class ProductPage extends StatelessWidget {
               color: Colors.grey,
             ),
           ),
-          
+
           const SizedBox(height: 24),
           const Text(
             'Your feedback is important to us. If you have any suggestions for features you would like to see, we\'d love to hear them!',
@@ -673,10 +689,12 @@ class ProductPage extends StatelessWidget {
               onPressed: () {
                 if (AuthService.getCurrentUser() != null) {
                   //continue with payment
-                  createNewProductTag(address: _addressController.value, description: _additionalInfoController.value, yourBaseDomain: 'hollertag.com', phoneNumber: _phoneController.value);
+                  createNewProductTag(address: _addressController.value,
+                      description: _additionalInfoController.value,
+                      yourBaseDomain: 'hollertag.com',
+                      phoneNumber: _phoneController.value);
                 } else {
-                  AuthService.signInWithGoogle();
-
+                  _showPurchaseSignUpPopup(context);
                   //then continue with payment
                 }
               },
@@ -686,14 +704,14 @@ class ProductPage extends StatelessWidget {
                 ),
                 shadowColor: WidgetStateProperty.all<Color>(Colors.transparent),
                 foregroundColor: WidgetStateProperty.resolveWith<Color>(
-                  (Set<WidgetState> states) {
+                      (Set<WidgetState> states) {
                     return currentGradient.colors.first;
                   },
                 ),
                 backgroundColor:
-                    WidgetStateProperty.all<Color>(Colors.transparent),
+                WidgetStateProperty.all<Color>(Colors.transparent),
                 side: WidgetStateProperty.resolveWith<BorderSide>(
-                  (Set<WidgetState> states) {
+                      (Set<WidgetState> states) {
                     return BorderSide(
                       color: currentGradient.colors.first,
                       width: 2.5,
@@ -703,9 +721,10 @@ class ProductPage extends StatelessWidget {
               ),
               child: ShaderMask(
                 blendMode: BlendMode.srcIn,
-                shaderCallback: (bounds) => currentGradient.createShader(
-                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                ),
+                shaderCallback: (bounds) =>
+                    currentGradient.createShader(
+                      Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                    ),
                 child: const Text('Purchase',
                     style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
@@ -727,7 +746,8 @@ class ProductPage extends StatelessWidget {
       final User? currentUser = AuthService.getCurrentUser();
 
       if (currentUser == null) {
-        throw Exception('User not authenticated. Please log in to create a tag.');
+        throw Exception(
+            'User not authenticated. Please log in to create a tag.');
       }
 
       final String ownerId = currentUser.uid;
@@ -751,9 +771,8 @@ class ProductPage extends StatelessWidget {
 
       final String productUrl = 'https://$yourBaseDomain/products/$newProductId';
       final dm = Barcode.qrCode();
-      final svg = dm.toSvg(productUrl, width:200, height: 200);
+      final svg = dm.toSvg(productUrl, width: 200, height: 200);
       await File('barcode.svg').writeAsString(svg);
-
     } catch (e) {
       print('Error in createNewProductTag: $e');
       rethrow; // Re-throw the exception for handling in the UI
@@ -763,8 +782,8 @@ class ProductPage extends StatelessWidget {
 
 // Updated image picker dialog function
 
-  Future<void> _showImagePickerDialog(
-      BuildContext context, ValueNotifier<XFile?> selectedImage) async {
+  Future<void> _showImagePickerDialog(BuildContext context,
+      ValueNotifier<XFile?> selectedImage) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -793,7 +812,7 @@ class ProductPage extends StatelessWidget {
                   final ImagePicker picker = ImagePicker();
 
                   final XFile? image =
-                      await picker.pickImage(source: ImageSource.camera);
+                  await picker.pickImage(source: ImageSource.camera);
 
                   if (image != null) {
                     // ignore: use_build_context_synchronously
@@ -809,6 +828,237 @@ class ProductPage extends StatelessWidget {
       },
     );
   }
+
+  // --- Enhanced Purchase popup with modern design matching Contact Us popup ---
+  void _showPurchaseSignUpPopup(BuildContext context) {
+    final double screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
+    final bool isDark = Theme
+        .of(context)
+        .brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: screenWidth > 600 ? screenWidth * 0.4 : screenWidth * 0.85,
+            constraints: BoxConstraints(
+              maxWidth: screenWidth > 600 ? screenWidth * 0.4 : screenWidth *
+                  0.85,
+              maxHeight: MediaQuery
+                  .of(context)
+                  .size
+                  .height * 0.7,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                  Colors.grey[900]!.withValues(alpha: 0.95),
+                  Colors.grey[800]!.withValues(alpha: 0.95),
+                ]
+                    : [
+                  Colors.white.withValues(alpha: 0.95),
+                  Colors.grey[50]!.withValues(alpha: 0.95),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Title with gradient matching Contact Us style
+                    ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) =>
+                          currentGradient.createShader(
+                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                          ),
+                      child: Text(
+                        'Account Required',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: screenWidth > 600 ? 28 : 24,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Info cards matching the contact card style
+                    _buildPurchaseCard(
+                      Icons.shopping_cart_outlined,
+                      'Secure Checkout',
+                      'Complete your purchase with encrypted payment processing',
+                      screenWidth,
+                      isDark,
+                      context
+                    ),
+                    const SizedBox(height: 32),
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: currentGradient,
+                              borderRadius: BorderRadius.circular(25),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: currentGradient.colors.first
+                                      .withValues(alpha: 0.3),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                Navigator.pushNamed(context, AppRoutes.signin);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                              ),
+                              child: Text(
+                                'Create Account',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.7)
+                                  : Colors.black.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+// Helper method to build purchase info cards matching contact card style
+  Widget _buildPurchaseCard(IconData icon, String title, String description,
+      double screenWidth, bool isDark, BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: AppTheme.getDefaultGradient(context),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
 // New function to show the image cropper popup
 
@@ -827,4 +1077,6 @@ class ProductPage extends StatelessWidget {
       },
     );
   }
+
+
 }

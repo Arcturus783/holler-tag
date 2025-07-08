@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/backend/google_auth.dart';
+import 'package:myapp/elements/app_theme.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -157,6 +158,9 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
 
   // Helper to build a modern section title
   Widget _buildSectionTitle(String title, {IconData? icon}) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0, top: 10.0),
       child: Row(
@@ -165,8 +169,15 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
             Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                gradient: _getGradient(),
+                gradient: currentGradient,
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: currentGradient.colors.first.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Icon(
                 icon,
@@ -181,7 +192,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.primary,
+              color: isDark ? Colors.white : Colors.black87,
               letterSpacing: 0.5,
             ),
           ),
@@ -192,164 +203,181 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
 
   // Helper to get gradient
   LinearGradient _getGradient() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark
-        ? const LinearGradient(
-      colors: [Colors.indigo, Colors.deepPurpleAccent],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    )
-        : const LinearGradient(
-      colors: [Color.fromARGB(255, 0, 217, 255), Color.fromARGB(255, 0, 255, 255)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
+    return AppTheme.getDefaultGradient(context);
   }
 
   // Build modern pet tag card
   Widget _buildPetTagCard(Map<String, String> tag, int index) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final lightColors = [
-      [const Color.fromARGB(255, 0, 217, 255), const Color.fromARGB(255, 0, 255, 255)],
-      [const Color.fromARGB(255, 0, 180, 255), const Color.fromARGB(255, 0, 217, 255)],
-      [const Color.fromARGB(255, 0, 255, 200), const Color.fromARGB(255, 0, 255, 255)],
-      [const Color.fromARGB(255, 100, 200, 255), const Color.fromARGB(255, 0, 217, 255)],
-      [const Color.fromARGB(255, 50, 230, 255), const Color.fromARGB(255, 0, 255, 255)],
-    ];
-
-    final darkColors = [
-      [Colors.indigo, Colors.deepPurpleAccent],
-      [Colors.indigo.shade800, Colors.indigo],
-      [Colors.deepPurple, Colors.deepPurpleAccent],
-      [Colors.indigo.shade700, Colors.deepPurple],
-      [Colors.deepPurpleAccent, Colors.indigo],
-    ];
-
-    final cardColors = isDark ? darkColors[index % darkColors.length] : lightColors[index % lightColors.length];
-
-
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
       decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+            Colors.grey[800]!.withValues(alpha: 0.95),
+            Colors.grey[700]!.withValues(alpha: 0.95),
+          ]
+              : [
+            Colors.white.withValues(alpha: 0.95),
+            Colors.grey[50]!.withValues(alpha: 0.95),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: cardColors[0].withValues(alpha:0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: cardColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
-            children: [
-              // QR Code placeholder with modern styling
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha:0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          children: [
+            // QR Code placeholder with modern styling
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.grey[600]!.withValues(alpha: 0.3)
+                    : Colors.grey[200]!.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.1),
+                  width: 1,
                 ),
-                child: const Icon(
-                  Icons.qr_code,
-                  size: 40,
-                  color: Colors.black54,
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              const SizedBox(width: 20),
+              child: Icon(
+                Icons.qr_code,
+                size: 40,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.7)
+                    : Colors.black54,
+              ),
+            ),
+            const SizedBox(width: 20),
 
-              // Tag information
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tag['tagName']!,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
+            // Tag information
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tag['tagName']!,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : Colors.black.withValues(alpha: 0.1),
+                        width: 1,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha:0.2),
-                        borderRadius: BorderRadius.circular(20),
+                    child: Text(
+                      tag['qrCode']!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.8)
+                            : Colors.black.withValues(alpha: 0.7),
+                        letterSpacing: 1.0,
                       ),
-                      child: Text(
-                        tag['qrCode']!,
-                        style: const TextStyle(
-                          fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.8),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withValues(alpha: 0.4),
+                              blurRadius: 4,
+                              offset: const Offset(0, 0),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        tag['status']!,
+                        style: TextStyle(
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                          letterSpacing: 1.0,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.8)
+                              : Colors.black.withValues(alpha: 0.7),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.greenAccent,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          tag['status']!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
-              // Action button
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha:0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.more_vert,
-                  color: Colors.white,
-                  size: 20,
+            // Action button
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.1),
+                  width: 1,
                 ),
               ),
-            ],
-          ),
+              child: Icon(
+                Icons.more_vert,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.7)
+                    : Colors.black.withValues(alpha: 0.6),
+                size: 20,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -357,18 +385,18 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
 
   // Build order history card
   Widget _buildOrderCard(Map<String, String> order) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     Color statusColor;
     switch (order['status']) {
       case 'Delivered':
-        statusColor = isDark ? Colors.greenAccent : Colors.green;
+        statusColor = Colors.green;
         break;
       case 'Processing':
-        statusColor = isDark ? Colors.orangeAccent : Colors.orange;
+        statusColor = Colors.orange;
         break;
       case 'Shipped':
-        statusColor = isDark ? const Color.fromARGB(255, 0, 217, 255) : Colors.blue;
+        statusColor = Colors.blue;
         break;
       default:
         statusColor = Colors.grey;
@@ -376,21 +404,33 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+            Colors.grey[900]!.withValues(alpha: 0.95),
+            Colors.grey[800]!.withValues(alpha: 0.95),
+          ]
+              : [
+            Colors.white.withValues(alpha: 0.95),
+            Colors.grey[50]!.withValues(alpha: 0.95),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.indigo.withValues(alpha:0.3)
-                : const Color.fromARGB(255, 0, 217, 255).withValues(alpha:0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -399,8 +439,12 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: statusColor.withValues(alpha:0.1),
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: statusColor.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
             child: Icon(
               Icons.shopping_bag_outlined,
@@ -415,16 +459,20 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
               children: [
                 Text(
                   order['orderId']!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
+                    color: isDark ? Colors.white : Colors.black87,
+                    letterSpacing: 0.3,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   order['date']!,
                   style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha:0.7),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black.withValues(alpha: 0.6),
                     fontSize: 14,
                   ),
                 ),
@@ -435,10 +483,14 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha:0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   order['status']!,
@@ -446,15 +498,18 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                     color: statusColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Text(
                 order['total']!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
+                  color: isDark ? Colors.white : Colors.black87,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
@@ -473,6 +528,9 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
     bool readOnly = false,
     void Function(String)? onChanged,
   }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
@@ -481,27 +539,51 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
           labelText: labelText,
           hintText: hintText,
           filled: true,
-          fillColor: Theme.of(context).colorScheme.surface,
+          fillColor: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.02),
+          labelStyle: TextStyle(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.7)
+                : Colors.black.withValues(alpha: 0.6),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          hintStyle: TextStyle(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.5)
+                : Colors.black.withValues(alpha: 0.4),
+            fontSize: 14,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
             borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha:0.5),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.2),
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
             borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.1),
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
             borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
+              color: currentGradient.colors.first,
               width: 2.0,
             ),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        ),
+        style: TextStyle(
+          color: isDark ? Colors.white : Colors.black87,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
         ),
         keyboardType: keyboardType,
         readOnly: readOnly,
@@ -514,176 +596,197 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     const double breakpoint = 900.0;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.light_mode
-                  : Icons.dark_mode,
-            ),
-            onPressed: widget.toggleTheme,
+      backgroundColor: isDark
+          ? Colors.grey[900]
+          : Colors.grey[50],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [
+              Colors.grey[900]!,
+              Colors.grey[850]!,
+            ]
+                : [
+              Colors.grey[50]!,
+              Colors.white,
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Welcome section
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24.0),
-                    decoration: BoxDecoration(
-                      gradient: _getGradient(),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha:0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+        ),
+        child: SingleChildScrollView(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Welcome section
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                        gradient: currentGradient,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          width: 1,
                         ),
-                      ],
+                        boxShadow: [
+                          BoxShadow(
+                            color: currentGradient.colors.first.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome back,',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          Text(
+                            _userName.isNotEmpty ? _userName : 'User',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '${_activeAnimalTags.length} Active Tags',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '${_orderHistory.length} Orders',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Column(
+
+                    const SizedBox(height: 32),
+
+                    // Main content
+                    screenWidth > breakpoint
+                        ? Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Welcome back,',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                        // Left column - Pet Tags (featured)
+                        Expanded(
+                          flex: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle('Your Pet Tags', icon: Icons.pets),
+                              _activeAnimalTags.isEmpty
+                                  ? _buildEmptyState('No active pet tags found.', 'Add your first pet tag to get started!')
+                                  : Column(
+                                children: _activeAnimalTags.asMap().entries.map((entry) {
+                                  return _buildPetTagCard(entry.value, entry.key);
+                                }).toList(),
+                              ),
+
+                              const SizedBox(height: 32),
+                              _buildSectionTitle('Recent Orders', icon: Icons.history),
+                              _orderHistory.isEmpty
+                                  ? _buildEmptyState('No orders found.', 'Your order history will appear here.')
+                                  : Column(
+                                children: _orderHistory.map((order) => _buildOrderCard(order)).toList(),
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          _userName.isNotEmpty ? _userName : 'User',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha:0.2),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${_activeAnimalTags.length} Active Tags',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha:0.2),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${_orderHistory.length} Orders',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
+
+                        const SizedBox(width: 32),
+
+                        // Right column - Settings
+                        Expanded(
+                          child: _buildSettingsPanel(),
                         ),
                       ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Main content
-                  screenWidth > breakpoint
-                      ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left column - Pet Tags (featured)
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionTitle('Your Pet Tags', icon: Icons.pets),
-                            _activeAnimalTags.isEmpty
-                                ? _buildEmptyState('No active pet tags found.', 'Add your first pet tag to get started!')
-                                : Column(
-                              children: _activeAnimalTags.asMap().entries.map((entry) {
-                                return _buildPetTagCard(entry.value, entry.key);
-                              }).toList(),
-                            ),
-
-                            const SizedBox(height: 32),
-                            _buildSectionTitle('Recent Orders', icon: Icons.history),
-                            _orderHistory.isEmpty
-                                ? _buildEmptyState('No orders found.', 'Your order history will appear here.')
-                                : Column(
-                              children: _orderHistory.map((order) => _buildOrderCard(order)).toList(),
-                            ),
-                          ],
+                    )
+                        : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Pet Tags section (mobile)
+                        _buildSectionTitle('Your Pet Tags', icon: Icons.pets),
+                        _activeAnimalTags.isEmpty
+                            ? _buildEmptyState('No active pet tags found.', 'Add your first pet tag to get started!')
+                            : Column(
+                          children: _activeAnimalTags.asMap().entries.map((entry) {
+                            return _buildPetTagCard(entry.value, entry.key);
+                          }).toList(),
                         ),
-                      ),
 
-                      const SizedBox(width: 32),
+                        const SizedBox(height: 32),
+                        _buildSectionTitle('Recent Orders', icon: Icons.history),
+                        _orderHistory.isEmpty
+                            ? _buildEmptyState('No orders found.', 'Your order history will appear here.')
+                            : Column(
+                          children: _orderHistory.map((order) => _buildOrderCard(order)).toList(),
+                        ),
 
-                      // Right column - Settings
-                      Expanded(
-                        child: _buildSettingsPanel(),
-                      ),
-                    ],
-                  )
-                      : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Pet Tags section (mobile)
-                      _buildSectionTitle('Your Pet Tags', icon: Icons.pets),
-                      _activeAnimalTags.isEmpty
-                          ? _buildEmptyState('No active pet tags found.', 'Add your first pet tag to get started!')
-                          : Column(
-                        children: _activeAnimalTags.asMap().entries.map((entry) {
-                          return _buildPetTagCard(entry.value, entry.key);
-                        }).toList(),
-                      ),
-
-                      const SizedBox(height: 32),
-                      _buildSectionTitle('Recent Orders', icon: Icons.history),
-                      _orderHistory.isEmpty
-                          ? _buildEmptyState('No orders found.', 'Your order history will appear here.')
-                          : Column(
-                        children: _orderHistory.map((order) => _buildOrderCard(order)).toList(),
-                      ),
-
-                      const SizedBox(height: 32),
-                      _buildSettingsPanel(),
-                    ],
-                  ),
-                ],
+                        const SizedBox(height: 32),
+                        _buildSettingsPanel(),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -693,37 +796,68 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
   }
 
   Widget _buildEmptyState(String title, String subtitle) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+            Colors.grey[900]!.withValues(alpha: 0.95),
+            Colors.grey[800]!.withValues(alpha: 0.95),
+          ]
+              : [
+            Colors.white.withValues(alpha: 0.95),
+            Colors.grey[50]!.withValues(alpha: 0.95),
+          ],
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Icon(
             Icons.inbox_outlined,
             size: 48,
-            color: Theme.of(context).colorScheme.outline,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.5)
+                : Colors.black.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+              letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             subtitle,
             style: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha:0.7),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : Colors.black.withValues(alpha: 0.6),
               fontSize: 14,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
@@ -733,18 +867,36 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
   }
 
   Widget _buildSettingsPanel() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+            Colors.grey[900]!.withValues(alpha: 0.95),
+            Colors.grey[800]!.withValues(alpha: 0.95),
+          ]
+              : [
+            Colors.white.withValues(alpha: 0.95),
+            Colors.grey[50]!.withValues(alpha: 0.95),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).shadowColor.withValues(alpha:0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -761,10 +913,21 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
             child: Container(
               padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
-                gradient: _getGradient(),
+                gradient: currentGradient,
                 borderRadius: _isSettingsExpanded
                     ? const BorderRadius.vertical(top: Radius.circular(20))
                     : BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: currentGradient.colors.first.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -777,6 +940,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
@@ -792,6 +956,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
           // Expandable settings content
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
             height: _isSettingsExpanded ? null : 0,
             child: _isSettingsExpanded ? _buildSettingsContent() : null,
           ),
@@ -801,17 +966,22 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
   }
 
   Widget _buildSettingsContent() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // User Information Section
-          const Text(
+          Text(
             'Personal Information',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+              letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: 16),
@@ -840,11 +1010,13 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
           const SizedBox(height: 24),
 
           // Shipping Information Section
-          const Text(
+          Text(
             'Shipping Address',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+              letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: 16),
@@ -907,11 +1079,13 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
           const SizedBox(height: 24),
 
           // Credit Card Information Section
-          const Text(
+          Text(
             'Payment Information',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+              letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: 16),
@@ -953,15 +1127,13 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
             width: double.infinity,
             child: Container(
               decoration: BoxDecoration(
-                gradient: _getGradient(),
-                borderRadius: BorderRadius.circular(12),
+                gradient: currentGradient,
+                borderRadius: BorderRadius.circular(25),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.indigo.withValues(alpha:0.3)
-                        : const Color.fromARGB(255, 0, 217, 255).withValues(alpha:0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: currentGradient.colors.first.withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
@@ -974,12 +1146,19 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                   // Add other data to print for demonstration
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('Profile updated successfully!'),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      content: const Text(
+                        'Profile updated successfully!',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      backgroundColor: currentGradient.colors.first,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(20),
                     ),
                   );
                 },
@@ -988,7 +1167,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                   shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 child: const Text(
@@ -997,6 +1176,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),

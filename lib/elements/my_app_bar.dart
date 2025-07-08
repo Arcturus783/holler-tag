@@ -75,8 +75,8 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
       color: isActive
           ? (isDark ? Colors.white : Colors.white)
           : (isHovered
-          ? (isDark ? Colors.white.withOpacity(0.9) : Colors.white.withOpacity(0.9))
-          : (foregroundColor ?? Colors.white).withOpacity(0.8)),
+          ? (isDark ? Colors.white.withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9))
+          : (foregroundColor ?? Colors.white).withValues(alpha: 0.8)),
       fontWeight: isActive ? FontWeight.w600 : (isHovered ? FontWeight.w500 : FontWeight.w400),
       fontSize: targetFontSize,
       letterSpacing: 0.5,
@@ -107,24 +107,24 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                 end: Alignment.bottomRight,
                 colors: isDark
                     ? [
-                  Colors.grey[900]!.withOpacity(0.95),
-                  Colors.grey[800]!.withOpacity(0.95),
+                  Colors.grey[900]!.withValues(alpha: 0.95),
+                  Colors.grey[800]!.withValues(alpha: 0.95),
                 ]
                     : [
-                  Colors.white.withOpacity(0.95),
-                  Colors.grey[50]!.withOpacity(0.95),
+                  Colors.white.withValues(alpha: 0.95),
+                  Colors.grey[50]!.withValues(alpha: 0.95),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.1),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.1),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 30,
                   offset: const Offset(0, 15),
                 ),
@@ -178,7 +178,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: currentGradient.colors.first.withOpacity(0.3),
+                            color: currentGradient.colors.first.withValues(alpha: 0.3),
                             blurRadius: 15,
                             offset: const Offset(0, 5),
                           ),
@@ -223,13 +223,13 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withOpacity(0.05)
-            : Colors.black.withOpacity(0.02),
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.1),
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
@@ -265,8 +265,8 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark
-                        ? Colors.white.withOpacity(0.7)
-                        : Colors.black.withOpacity(0.6),
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -278,6 +278,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
   }
 
   // --- Enhanced Sign In popup ---
+  // --- Enhanced Sign In popup with modern design matching Contact Us popup ---
   void _showSignInPopup(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
@@ -293,7 +294,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
             width: screenWidth > 600 ? screenWidth * 0.4 : screenWidth * 0.85,
             constraints: BoxConstraints(
               maxWidth: screenWidth > 600 ? screenWidth * 0.4 : screenWidth * 0.85,
-              maxHeight: MediaQuery.of(context).size.height * 0.6,
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -301,24 +302,24 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                 end: Alignment.bottomRight,
                 colors: isDark
                     ? [
-                  Colors.grey[900]!.withOpacity(0.95),
-                  Colors.grey[800]!.withOpacity(0.95),
+                  Colors.grey[900]!.withValues(alpha: 0.95),
+                  Colors.grey[800]!.withValues(alpha: 0.95),
                 ]
                     : [
-                  Colors.white.withOpacity(0.95),
-                  Colors.grey[50]!.withOpacity(0.95),
+                  Colors.white.withValues(alpha: 0.95),
+                  Colors.grey[50]!.withValues(alpha: 0.95),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.1),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.1),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 30,
                   offset: const Offset(0, 15),
                 ),
@@ -330,43 +331,53 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Lock icon with gradient background
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: currentGradient,
-                        borderRadius: BorderRadius.circular(50),
+                    // Title with gradient matching Contact Us style
+                    ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) => currentGradient.createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                       ),
-                      child: const Icon(
-                        Icons.lock_outline,
-                        color: Colors.white,
-                        size: 32,
+                      child: Text(
+                        'Sign In Required',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: screenWidth > 600 ? 28 : 24,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text(
-                      'Authentication Required',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: screenWidth > 600 ? 24 : 20,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : Colors.black87,
-                        letterSpacing: 0.5,
-                      ),
+
+                    // Info cards matching the contact card style
+                    _buildSignInCard(
+                      Icons.dashboard_outlined,
+                      'Dashboard Access',
+                      'Unlock personalized features and manage your account',
+                      screenWidth,
+                      isDark,
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'You need to sign in to access the dashboard and unlock all features.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isDark
-                            ? Colors.white.withOpacity(0.7)
-                            : Colors.black.withOpacity(0.6),
-                        height: 1.5,
-                      ),
+                    _buildSignInCard(
+                      Icons.security_outlined,
+                      'Secure Authentication',
+                      'Your data is protected with industry-standard security',
+                      screenWidth,
+                      isDark,
                     ),
+                    const SizedBox(height: 16),
+                    _buildSignInCard(
+                      Icons.person_outline,
+                      'Personal Experience',
+                      'Customized content and saved preferences',
+                      screenWidth,
+                      isDark,
+                    ),
+
                     const SizedBox(height: 32),
+
+                    // Action buttons
                     Row(
                       children: [
                         Expanded(
@@ -376,7 +387,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(25),
                               boxShadow: [
                                 BoxShadow(
-                                  color: currentGradient.colors.first.withOpacity(0.3),
+                                  color: currentGradient.colors.first.withValues(alpha: 0.3),
                                   blurRadius: 15,
                                   offset: const Offset(0, 5),
                                 ),
@@ -391,8 +402,8 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 14,
+                                  horizontal: 32,
+                                  vertical: 12,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25),
@@ -415,8 +426,8 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                           onPressed: () => Navigator.of(dialogContext).pop(),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 14,
+                              horizontal: 32,
+                              vertical: 12,
                             ),
                           ),
                           child: Text(
@@ -425,8 +436,8 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: isDark
-                                  ? Colors.white.withOpacity(0.7)
-                                  : Colors.black.withOpacity(0.6),
+                                  ? Colors.white.withValues(alpha: 0.7)
+                                  : Colors.black.withValues(alpha: 0.6),
                             ),
                           ),
                         ),
@@ -439,6 +450,66 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
           ),
         );
       },
+    );
+  }
+
+// Helper method to build sign-in info cards matching contact card style
+  Widget _buildSignInCard(IconData icon, String title, String description, double screenWidth, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: AppTheme.getDefaultGradient(context),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -469,15 +540,15 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
             color: isActive
                 ? null
                 : (isHovered
-                ? Colors.white.withOpacity(0.1)
+                ? Colors.white.withValues(alpha: 0.1)
                 : Colors.transparent),
             borderRadius: BorderRadius.circular(25),
             border: isHovered && !isActive
-                ? Border.all(color: Colors.white.withOpacity(0.2), width: 1)
+                ? Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1)
                 : null,
             boxShadow: isActive ? [
               BoxShadow(
-                color: currentGradient.colors.first.withOpacity(0.3),
+                color: currentGradient.colors.first.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -516,7 +587,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                     size: 18,
                     color: isActive
                         ? Colors.white
-                        : Colors.white.withOpacity(0.8),
+                        : Colors.white.withValues(alpha: 0.8),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -547,13 +618,13 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     gradient: isActive ? currentGradient : null,
-                    color: isActive ? null : Colors.grey.withOpacity(0.1),
+                    color: isActive ? null : Colors.grey.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     icon,
                     size: 18,
-                    color: isActive ? Colors.white : textColor.withOpacity(0.7),
+                    color: isActive ? Colors.white : textColor.withValues(alpha: 0.7),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -580,17 +651,17 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
           end: Alignment.bottomCenter,
           colors: isDark
               ? [
-            Colors.black.withOpacity(0.8),
-            Colors.black.withOpacity(0.6),
+            Colors.black.withValues(alpha: 0.8),
+            Colors.black.withValues(alpha: 0.6),
           ]
               : [
-            Colors.black.withOpacity(0.7),
-            Colors.black.withOpacity(0.5),
+            Colors.black.withValues(alpha: 0.7),
+            Colors.black.withValues(alpha: 0.5),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -607,10 +678,10 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
             // Enhanced hamburger menu
             Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -661,7 +732,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: currentGradient.colors.first.withOpacity(0.3),
+                    color: currentGradient.colors.first.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -695,7 +766,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: currentGradient.colors.first.withOpacity(0.3),
+                    color: currentGradient.colors.first.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

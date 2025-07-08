@@ -21,7 +21,8 @@ class AppRoutes {
   static const String home = '/';
   static const String dashboard = '/dashboard';
   static const String signin = '/signin';
-  static const String product_page = '/product_page'; // This is your SHOPPING page
+  static const String product_page =
+      '/product_page'; // This is your SHOPPING page
 // static const String scanned_product_detail = '/products/:productId'; // Conceptual, handled by onGenerateRoute
 }
 
@@ -29,14 +30,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
       options: const FirebaseOptions(
-        apiKey:
-        "AIzaSyDbpGqdo3YDfpcnoH6UXhDUbK7B7EvbmnY", // SECURITY RISK: THIS SHOULD BE SECURED!
-        authDomain: "holler-tag.firebaseapp.com",
-        projectId: "holler-tag",
-        storageBucket: "holler-tag.firebasestorage.app",
-        messagingSenderId: "147037316014",
-        appId: "1:147037316014:web:4f8247a912242943155e3f",
-      ));
+    apiKey: "AIzaSyDbpGqdo3YDfpcnoH6UXhDUbK7B7EvbmnY",
+    // SECURITY RISK: THIS SHOULD BE SECURED!
+    authDomain: "holler-tag.firebaseapp.com",
+    projectId: "holler-tag",
+    storageBucket: "holler-tag.firebasestorage.app",
+    messagingSenderId: "147037316014",
+    appId: "1:147037316014:web:4f8247a912242943155e3f",
+  ));
   runApp(const MyApp());
 }
 
@@ -53,7 +54,7 @@ class _MyAppState extends State<MyApp> {
   void _toggleTheme() {
     setState(() {
       _themeMode =
-      _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     });
   }
 
@@ -67,7 +68,7 @@ class _MyAppState extends State<MyApp> {
       themeMode: _themeMode,
       initialRoute: AppRoutes.home,
       routes: {
-        // Your existing static routes for the application
+// Your existing static routes for the application
         AppRoutes.home: (context) => HomePage(toggleTheme: _toggleTheme),
         AppRoutes.dashboard: (context) =>
             DashboardPage(toggleTheme: _toggleTheme),
@@ -77,12 +78,12 @@ class _MyAppState extends State<MyApp> {
             ProductPage(toggleTheme: _toggleTheme) // This is your SHOPPING page
       },
 
-      // Use onGenerateRoute for dynamic routes (like /products/:productId from QR scan)
+// Use onGenerateRoute for dynamic routes (like /products/:productId from QR scan)
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name!);
         final pathSegments = uri.pathSegments;
 
-        // Handle the /products/:productId route for scanned QR codes
+// Handle the /products/:productId route for scanned QR codes
         if (pathSegments.length == 2 && pathSegments[0] == 'products') {
           final productId = pathSegments[1];
           return MaterialPageRoute(
@@ -94,9 +95,9 @@ class _MyAppState extends State<MyApp> {
           );
         }
 
-        // If no matching dynamic route is found, fall back to an error page or home
-        // IMPORTANT: For production, you might want to return a dedicated 404 page
-        // or redirect to a known route.
+// If no matching dynamic route is found, fall back to an error page or home
+// IMPORTANT: For production, you might want to return a dedicated 404 page
+// or redirect to a known route.
         return MaterialPageRoute(
           builder: (context) => const Scaffold(
             body: Center(
@@ -108,7 +109,6 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-
 
 class HomePage extends StatefulWidget {
   final VoidCallback toggleTheme; // Receive toggleTheme callback from MyApp
@@ -126,7 +126,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  // Image lists for carousel, responsive to screen size and theme
+// Image lists for carousel, responsive to screen size and theme
   final List<String> _lightImageListLarge = [
     'assets/images/Neues-Macbook-Pro-hat-Power-und-Ports.jpg',
     'assets/images/apple-macbook-pro-13-3-side-uhd-4k-wallpaper.jpg',
@@ -153,7 +153,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     'assets/images/dtech.jpg',
     'assets/images/smoke.jpg'
   ];
-  // Background images for the "Our Mission" section
+
+// Background images for the "Our Mission" section
   final String _lightBackgroundImage = 'assets/images/flowers.jpg';
   final String _darkBackgroundImage = 'assets/images/download (1).jpg';
 
@@ -185,7 +186,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       curve: Curves.easeOutCubic,
     ));
 
-    // Start animations
+// Start animations
     _fadeController.forward();
     _slideController.forward();
   }
@@ -199,37 +200,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    // Get media query data for responsive sizing
+// Get media query data for responsive sizing
     MediaQueryData queryData = MediaQuery.of(context);
     double screenWidth = queryData.size.width;
     double screenHeight = queryData.size.height;
     double appBarHeight = kToolbarHeight;
-    // Calculate available vertical space for the carousel
+// Calculate available vertical space for the carousel
     double availableHeightForCarousel = screenHeight - appBarHeight;
 
-    // Define responsive font sizes
+// Define responsive font sizes
     double titleFontSize = screenWidth < 600 ? 32.0 : 48.0;
     double subtitleFontSize = screenWidth < 600 ? 16.0 : 20.0;
     double missionTitleSize = screenWidth < 600 ? 28.0 : 36.0;
     double bodyTextSize = screenWidth < 600 ? 14.0 : 16.0;
 
-    // Select image list based on screen width and current theme
+// Select image list based on screen width and current theme
     List<String> imageUrlsToUse;
     if (Theme.of(context).brightness == Brightness.dark) {
       imageUrlsToUse =
-      screenWidth >= 800 ? _darkImageListLarge : _darkImageListSmall;
+          screenWidth >= 800 ? _darkImageListLarge : _darkImageListSmall;
     } else {
       imageUrlsToUse =
-      screenWidth >= 800 ? _lightImageListLarge : _lightImageListSmall;
+          screenWidth >= 800 ? _lightImageListLarge : _lightImageListSmall;
     }
 
-    // Select background image based on current theme
+// Select background image based on current theme
     final String currentBackgroundImage =
-    Theme.of(context).brightness == Brightness.dark
-        ? _darkBackgroundImage
-        : _lightBackgroundImage;
+        Theme.of(context).brightness == Brightness.dark
+            ? _darkBackgroundImage
+            : _lightBackgroundImage;
 
-    // Get the current gradient from the app theme
+// Get the current gradient from the app theme
     final currentGradient = AppTheme.getDefaultGradient(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -238,7 +239,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Hero Section with enhanced overlay
+// Hero Section with enhanced overlay
             Stack(
               children: [
                 SizedBox(
@@ -249,7 +250,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     maxHeight: availableHeightForCarousel,
                   ),
                 ),
-                // Enhanced gradient overlay
+// Enhanced gradient overlay
                 Container(
                   width: double.infinity,
                   height: availableHeightForCarousel,
@@ -258,15 +259,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.1),
-                        Colors.black.withOpacity(0.4),
-                        Colors.black.withOpacity(0.7),
+                        Colors.black.withValues(alpha: 0.1),
+                        Colors.black.withValues(alpha: 0.4),
+                        Colors.black.withValues(alpha: 0.7),
                       ],
                       stops: const [0.0, 0.5, 1.0],
                     ),
                   ),
                 ),
-                // Hero content with animations
+// Hero content with animations
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -287,11 +288,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // Brand title with enhanced typography
+// Brand title with enhanced typography
                               ShaderMask(
                                 blendMode: BlendMode.srcIn,
-                                shaderCallback: (bounds) => currentGradient.createShader(
-                                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                                shaderCallback: (bounds) =>
+                                    currentGradient.createShader(
+                                  Rect.fromLTWH(
+                                      0, 0, bounds.width, bounds.height),
                                 ),
                                 child: Text(
                                   "Holler Tag",
@@ -305,33 +308,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              // Subtitle with better typography
+// Subtitle with better typography
                               Text(
                                 "Built for safety. Built to last.\nBuilt for you.",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: subtitleFontSize,
                                   fontWeight: FontWeight.w300,
-                                  color: Colors.white.withOpacity(0.95),
+                                  color: Colors.white.withValues(alpha: 0.95),
                                   height: 1.4,
                                   letterSpacing: 0.5,
                                 ),
                               ),
                               const SizedBox(height: 32),
-                              // Enhanced button row
+// Enhanced button row
                               Wrap(
                                 spacing: 16.0,
                                 runSpacing: 12.0,
                                 alignment: WrapAlignment.center,
                                 children: [
-                                  // Register button with gradient background
+// Register button with gradient background
                                   Container(
                                     decoration: BoxDecoration(
                                       gradient: currentGradient,
                                       borderRadius: BorderRadius.circular(30),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: currentGradient.colors.first.withOpacity(0.3),
+                                          color: currentGradient.colors.first
+                                              .withValues(alpha: 0.3),
                                           blurRadius: 20,
                                           offset: const Offset(0, 8),
                                         ),
@@ -342,7 +346,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => const QrTo3DApp(),
+                                            builder: (context) =>
+                                                const QrTo3DApp(),
                                           ),
                                         );
                                       },
@@ -350,11 +355,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         backgroundColor: Colors.transparent,
                                         shadowColor: Colors.transparent,
                                         padding: EdgeInsets.symmetric(
-                                          horizontal: screenWidth < 600 ? 32 : 40,
+                                          horizontal:
+                                              screenWidth < 600 ? 32 : 40,
                                           vertical: screenWidth < 600 ? 16 : 20,
                                         ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(30),
+                                          borderRadius:
+                                              BorderRadius.circular(30),
                                         ),
                                       ),
                                       child: Text(
@@ -368,18 +375,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       ),
                                     ),
                                   ),
-                                  // Shop Now button with glass morphism effect
+// Shop Now button with glass morphism effect
                                   Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(30),
                                       border: Border.all(
-                                        color: Colors.white.withOpacity(0.3),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.3),
                                         width: 2,
                                       ),
-                                      color: Colors.white.withOpacity(0.1),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.1),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
+                                          color: Colors.black
+                                              .withValues(alpha: 0.1),
                                           blurRadius: 20,
                                           offset: const Offset(0, 8),
                                         ),
@@ -387,17 +397,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     ),
                                     child: ElevatedButton(
                                       onPressed: () {
-                                        Navigator.pushNamed(context, AppRoutes.product_page);
+                                        Navigator.pushNamed(
+                                            context, AppRoutes.product_page);
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.transparent,
                                         shadowColor: Colors.transparent,
                                         padding: EdgeInsets.symmetric(
-                                          horizontal: screenWidth < 600 ? 32 : 40,
+                                          horizontal:
+                                              screenWidth < 600 ? 32 : 40,
                                           vertical: screenWidth < 600 ? 16 : 20,
                                         ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(30),
+                                          borderRadius:
+                                              BorderRadius.circular(30),
                                         ),
                                       ),
                                       child: Text(
@@ -423,7 +436,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ],
             ),
 
-            // Mission Section with modern card design
+// Mission Section with modern card design
             Container(
               margin: const EdgeInsets.all(20.0),
               child: Card(
@@ -439,16 +452,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       fit: BoxFit.cover,
                       colorFilter: ColorFilter.mode(
                         isDark
-                            ? Colors.black.withOpacity(0.6)
-                            : Colors.white.withOpacity(0.8),
+                            ? Colors.black.withValues(alpha: 0.6)
+                            : Colors.white.withValues(alpha: 0.8),
                         BlendMode.overlay,
                       ),
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: isDark
-                            ? Colors.black.withOpacity(0.3)
-                            : Colors.grey.withOpacity(0.2),
+                            ? Colors.black.withValues(alpha: 0.3)
+                            : Colors.grey.withValues(alpha: 0.2),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -462,10 +475,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                       child: Column(
                         children: [
-                          // Mission title with gradient
+// Mission title with gradient
                           ShaderMask(
                             blendMode: BlendMode.srcIn,
-                            shaderCallback: (bounds) => currentGradient.createShader(
+                            shaderCallback: (bounds) =>
+                                currentGradient.createShader(
                               Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                             ),
                             child: Text(
@@ -480,7 +494,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(height: 32),
-                          // Mission content in cards
+// Mission content in cards
                           _buildMissionCard(
                             "Innovation & Safety",
                             "We're committed to creating products that prioritize your safety without compromising on innovation. Every Holler Tag is designed with cutting-edge technology to protect what matters most.",
@@ -514,25 +528,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildMissionCard(String title, String content, double fontSize, bool isDark) {
+  Widget _buildMissionCard(
+      String title, String content, double fontSize, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(24.0),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withOpacity(0.05)
-            : Colors.white.withOpacity(0.9),
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.1),
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha: 0.2)
+                : Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -556,8 +571,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             style: TextStyle(
               fontSize: fontSize,
               color: isDark
-                  ? Colors.white.withOpacity(0.8)
-                  : Colors.black.withOpacity(0.7),
+                  ? Colors.white.withValues(alpha: 0.8)
+                  : Colors.black.withValues(alpha: 0.7),
               height: 1.6,
               letterSpacing: 0.3,
             ),

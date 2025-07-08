@@ -726,6 +726,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
               ),
             ),
             // Enhanced theme toggle
+            /*
             Container(
               decoration: BoxDecoration(
                 gradient: currentGradient,
@@ -748,8 +749,10 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                 tooltip: 'Toggle Theme',
               ),
             ),
+            */
           ],
         )
+
             : Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
@@ -760,6 +763,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
             buildModernNavButton('Contact Us', AppRoutes.contact),
             const SizedBox(width: 20),
             // Enhanced theme toggle for desktop
+            /*
             Container(
               decoration: BoxDecoration(
                 gradient: currentGradient,
@@ -782,6 +786,7 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
                 tooltip: 'Toggle Theme',
               ),
             ),
+             */
           ],
         ),
       ),

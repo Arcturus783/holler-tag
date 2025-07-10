@@ -531,7 +531,7 @@ class ProductPage extends StatelessWidget {
               return TextField(
                 onChanged: (text) => _nameController.value = text,
                 decoration: InputDecoration(
-                  hintText: 'Enter your name',
+                  hintText: "Enter your pet's name",
                   hintStyle: TextStyle(color: Colors.grey[600]),
                   // Custom grey color
                   border: OutlineInputBorder(
@@ -551,44 +551,9 @@ class ProductPage extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Optional Address field
-          const Text(
-            'Address (Optional)',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ValueListenableBuilder<String>(
-            valueListenable: _addressController,
-            builder: (context, value, child) {
-              return TextField(
-                onChanged: (text) => _addressController.value = text,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  hintText: 'Enter your address',
-                  hintStyle: TextStyle(color: Colors.grey[600]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: primaryColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: primaryColor, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 16),
-
           // Optional Phone field
           const Text(
-            'Phone Number (Optional)',
+            'Phone Number',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -623,7 +588,7 @@ class ProductPage extends StatelessWidget {
 
           // Optional Additional Information field with character limit
           const Text(
-            'Additional Information (Optional)',
+            'Lost Pet Information',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -645,7 +610,7 @@ class ProductPage extends StatelessWidget {
                     maxLines: 3,
                     maxLength: 200,
                     decoration: InputDecoration(
-                      hintText: 'Enter any additional information for your pet\'s tag',
+                      hintText: 'Enter your address, email, or any info that would help someone return your pet if lost',
                       hintStyle: TextStyle(color: Colors.grey[600]),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -678,7 +643,7 @@ class ProductPage extends StatelessWidget {
 
           const SizedBox(height: 24),
           const Text(
-            'Your feedback is important to us. If you have any suggestions for features you would like to see, we\'d love to hear them!',
+            'Your feedback is important to us. If you have any suggestions for features you would like to see, we\'d love to hear them! Please reach out via the Contact Us option at the top.',
             style: TextStyle(
               fontStyle: FontStyle.italic,
             ),
@@ -754,16 +719,22 @@ class ProductPage extends StatelessWidget {
 
       // 2. Prepare the data for the new document
       final Map<String, dynamic> newTagData = {
-        'Address': address,
-        'Description': description,
-        'Phone Number': phoneNumber,
-        'ownerId': ownerId,
-        'createdAt': FieldValue.serverTimestamp(),
+        'Phone': phoneNumber,
+        'Additional Info': description,
+        'Found': false,
+        'Found Message': "",
+        'Name': "Woofer",
+        'ownerId' : ownerId,
       };
 
       // 3. Add the document to the "tags" collection
       DocumentReference documentRef =
       await FirebaseFirestore.instance.collection('tags').add(newTagData);
+
+      //add pet tag to user
+      await FirebaseFirestore.instance.collection('users').doc(ownerId).update({
+        'pets': FieldValue.arrayUnion([documentRef.id])
+      });
 
       final String newProductId = documentRef.id;
       print('Successfully created new product tag with ID: $newProductId');

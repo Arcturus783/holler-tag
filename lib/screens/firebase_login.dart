@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:myapp/elements/my_app_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/backend/google_auth.dart';
@@ -58,6 +59,21 @@ class _FirebaseLoginPageState extends State<FirebaseLoginPage>
     super.dispose();
   }
 
+  Future<bool> userDocumentExists(String userId) async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get(); // Get the document snapshot
+
+      return userDoc.exists; // Returns true if the document exists, false otherwise
+    } catch (e) {
+      print("Error checking document existence: $e");
+      // Handle the error (e.g., no internet connection, permission denied, etc.)
+      return false; // Assume it doesn't exist or an error occurred
+    }
+  }
+
   Future<void> signInWithGoogle() async {
     setState(() {
       _isLoading = true;
@@ -72,6 +88,17 @@ class _FirebaseLoginPageState extends State<FirebaseLoginPage>
         "Signed in as: ${userCred?.user?.email ?? "No email found"}";
         _isLoading = false;
       });
+
+      bool exists = await userDocumentExists(userCred!.user!.uid);
+      if(!exists){
+        //first time log in
+        //add user to firebase
+        final Map<String, dynamic> userData = {
+          "email": userCred!.user!.email,
+          "provider": "google"
+        };
+        await FirebaseFirestore.instance.collection('users').doc(userCred!.user!.uid).set(userData);
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -105,6 +132,14 @@ class _FirebaseLoginPageState extends State<FirebaseLoginPage>
           await userCred!.user!.updateDisplayName(_fullNameController.text.trim());
           await userCred!.user!.reload();
         }
+
+        //add user to firebase
+        final Map<String, dynamic> userData = {
+          "email": userCred!.user!.email,
+          "pets": [],
+          "provider": "email"
+        };
+        await FirebaseFirestore.instance.collection('users').doc(userCred!.user!.uid).set(userData);
 
         // Send email verification
         if (userCred?.user != null && !userCred!.user!.emailVerified) {

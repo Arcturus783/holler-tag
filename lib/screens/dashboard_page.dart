@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/backend/google_auth.dart';
 import 'package:myapp/elements/app_theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:myapp/elements/my_app_bar.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -13,16 +15,22 @@ class AppRoutes {
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
+
   const DashboardPage({required this.toggleTheme, super.key});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> with TickerProviderStateMixin {
+class _DashboardPageState extends State<DashboardPage>
+    with TickerProviderStateMixin {
   // Placeholder data for user information
-  String _userName = AuthService.getCurrentUser()!.displayName ?? '';
-  String _userEmail = AuthService.getCurrentUser()!.email ?? '';
+  String _userName = AuthService.getCurrentUser()?.displayName ?? '';
+  String _userEmail = AuthService.getCurrentUser()?.email ?? '';
+  DocumentReference? docRef; // Make it nullable initially
+
+  // Initialize userData as null or with default empty map
+  Map<String, dynamic> _userData = {};
 
   // Placeholder data for shipping information
   String _shippingAddressLine1 = '123 Main St';
@@ -55,11 +63,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
   ];
 
   // Placeholder for active animal tags
-  final List<Map<String, String>> _activeAnimalTags = [
-    {'tagName': 'Buddy (Dog)', 'qrCode': 'QR12345', 'status': 'Active'},
-    {'tagName': 'Whiskers (Cat)', 'qrCode': 'QR67890', 'status': 'Active'},
-    {'tagName': 'Charlie (Bird)', 'qrCode': 'QR54321', 'status': 'Active'},
-  ];
+  final List<Map<String, String>> _activeAnimalTags = [];
 
   // Placeholder for credit card information
   String _creditCardNumber = '**** **** **** 1234';
@@ -91,6 +95,20 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
+    // Initialize docRef after super.initState()
+    final currentUser = AuthService.getCurrentUser();
+    if (currentUser != null) {
+      docRef = FirebaseFirestore.instance.collection('users').doc(currentUser.uid);
+      _userName = currentUser.displayName ?? '';
+      _userEmail = currentUser.email ?? '';
+      _fetchUserData(); // Fetch user data when the state initializes
+    } else {
+      // Handle the case where there is no current user (e.g., navigate to sign-in)
+      print("No current user found.");
+      // You might want to navigate to the sign-in page here
+      // Navigator.of(context).pushReplacementNamed(AppRoutes.signin);
+    }
+
 
     // Initialize animation controllers
     _fadeController = AnimationController(
@@ -122,11 +140,14 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
     _fadeController.forward();
     _slideController.forward();
 
-    // Initialize controllers with current placeholder data
+    // Initialize controllers with current placeholder data.
+    // These will be updated by setState in _fetchUserData once data is loaded.
     _nameController = TextEditingController(text: _userName);
     _emailController = TextEditingController(text: _userEmail);
-    _addressLine1Controller = TextEditingController(text: _shippingAddressLine1);
-    _addressLine2Controller = TextEditingController(text: _shippingAddressLine2);
+    _addressLine1Controller =
+        TextEditingController(text: _shippingAddressLine1);
+    _addressLine2Controller =
+        TextEditingController(text: _shippingAddressLine2);
     _cityController = TextEditingController(text: _shippingCity);
     _stateController = TextEditingController(text: _shippingState);
     _zipCodeController = TextEditingController(text: _shippingZipCode);
@@ -136,12 +157,59 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
     _cardHolderController = TextEditingController(text: _creditCardHolder);
   }
 
+  // Asynchronous function to fetch user data
+  Future<void> _fetchUserData() async {
+    if (docRef == null) return; // Ensure docRef is not null
+
+    try {
+      DocumentSnapshot doc = await docRef!.get();
+      if (doc.exists && doc.data() != null) {
+        // Use setState to update the UI once data is fetched
+        setState(() {
+          _userData = doc.data() as Map<String, dynamic>;
+          // Update TextEditingControllers
+          //_nameController.text = _userName;
+          //_emailController.text = _userEmail;
+          // Clear previous tags and fetch new ones
+          _activeAnimalTags.clear();
+          if (_userData['pets'] != null && (_userData['pets'] as List).isNotEmpty) {
+            for (String id in _userData['pets']) {
+              DocumentReference petRef = FirebaseFirestore.instance.collection('tags').doc(id);
+              petRef.get().then(
+                    (DocumentSnapshot petDoc) {
+                  if (petDoc.exists && petDoc.data() != null) {
+                    final data = petDoc.data() as Map<String, dynamic>;
+                    setState(() { // Update state again for pet tags
+                      _activeAnimalTags.add(
+                        {
+                          'tagName': data['Name'] ?? 'Unnamed',
+                          'qrCode': id,
+                          'found': data['Found']?.toString() ?? 'false', // Convert boolean to string
+                          'foundMessage': data['Found Message'] ?? '',
+                          'phone': data['Phone'] ?? '',
+                          'additionalInfo': data['Additional Info'] ?? '',
+                        },
+                      );
+                    });
+                  }
+                },
+                onError: (e) => print("Error getting pet document: $e"),
+              );
+            }
+          }
+        });
+      } else {
+        print("Document does not exist or data is null.");
+      }
+    } catch (e) {
+      print("Error getting user document: $e");
+    }
+  }
+
   @override
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
-
-    // Dispose controllers to prevent memory leaks
     _nameController.dispose();
     _emailController.dispose();
     _addressLine1Controller.dispose();
@@ -155,6 +223,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
     _cardHolderController.dispose();
     super.dispose();
   }
+
 
   // Helper to build a modern section title
   Widget _buildSectionTitle(String title, {IconData? icon}) {
@@ -206,9 +275,172 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
     return AppTheme.getDefaultGradient(context);
   }
 
+  // Function to show found message popup
+  void _showFoundMessageDialog(String message, String petName) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24.0),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                  Colors.grey[900]!.withValues(alpha: 0.95),
+                  Colors.grey[800]!.withValues(alpha: 0.95),
+                ]
+                    : [
+                  Colors.white.withValues(alpha: 0.95),
+                  Colors.grey[50]!.withValues(alpha: 0.95),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with icon
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.info_outline,
+                        color: Colors.red,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '$petName - Found Report',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : Colors.black87,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.7)
+                            : Colors.black.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Message content
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.02),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    message.isNotEmpty ? message : 'No additional message provided.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.8)
+                          : Colors.black.withValues(alpha: 0.7),
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Close button
+                SizedBox(
+                  width: double.infinity,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: currentGradient,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: currentGradient.colors.first.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // Build modern pet tag card
   Widget _buildPetTagCard(Map<String, String> tag, int index) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isFound = tag['found']?.toLowerCase() == 'true';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -294,7 +526,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.1)
@@ -320,61 +553,93 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.8),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.green.withValues(alpha: 0.4),
-                              blurRadius: 4,
-                              offset: const Offset(0, 0),
+                  // Status indicator - only show if pet is found
+                  if (isFound) ...[
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.8),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withValues(alpha: 0.4),
+                                blurRadius: 4,
+                                offset: const Offset(0, 0),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Reported Found',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.8)
+                                : Colors.black.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => _showFoundMessageDialog(
+                              tag['foundMessage'] ?? '',
+                              tag['tagName'] ?? 'Pet'
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.2),
+                                width: 1,
+                              ),
                             ),
-                          ],
+                            child: Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: Colors.red,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        tag['status']!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.8)
-                              : Colors.black.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
 
             // Action button
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 1,
-                ),
+            // Replace the action button container in _buildPetTagCard with this:
+            GestureDetector(
+              onTap: () => _showEditPetDialog(
+                tag['qrCode']!,
+                tag['tagName'] ?? '',
+                tag['phone'] ?? '',
+                tag['additionalInfo'] ?? '',
               ),
-              child: Icon(
-                Icons.more_vert,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.7)
-                    : Colors.black.withValues(alpha: 0.6),
-                size: 20,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: _getGradient(),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getGradient().colors.first.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.edit,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
           ],
@@ -382,6 +647,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
       ),
     );
   }
+
 
   // Build order history card
   Widget _buildOrderCard(Map<String, String> order) {
@@ -483,7 +749,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -578,7 +845,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
               width: 2.0,
             ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         ),
         style: TextStyle(
           color: isDark ? Colors.white : Colors.black87,
@@ -600,9 +868,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
     final currentGradient = AppTheme.getDefaultGradient(context);
 
     return Scaffold(
-      backgroundColor: isDark
-          ? Colors.grey[900]
-          : Colors.grey[50],
+      appBar: MyAppBar(toggleTheme: widget.toggleTheme),
+      backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -642,7 +909,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: currentGradient.colors.first.withValues(alpha: 0.3),
+                            color: currentGradient.colors.first
+                                .withValues(alpha: 0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -673,7 +941,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(20),
@@ -683,7 +952,7 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                                   ),
                                 ),
                                 child: Text(
-                                  '${_activeAnimalTags.length} Active Tags',
+                                  _activeAnimalTags.length == 1 ? '1 Active Tag' : '${_activeAnimalTags.length} Active Tags',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
@@ -692,9 +961,11 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                                   ),
                                 ),
                               ),
+                              /*
                               const SizedBox(width: 12),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(20),
@@ -713,6 +984,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                                   ),
                                 ),
                               ),
+
+                               */
                             ],
                           ),
                         ],
@@ -732,22 +1005,38 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildSectionTitle('Your Pet Tags', icon: Icons.pets),
+                              _buildSectionTitle('Your Pet Tags',
+                                  icon: Icons.pets),
                               _activeAnimalTags.isEmpty
-                                  ? _buildEmptyState('No active pet tags found.', 'Add your first pet tag to get started!')
+                                  ? _buildEmptyState(
+                                  'No active pet tags found.',
+                                  'Add your first pet tag to get started!')
                                   : Column(
-                                children: _activeAnimalTags.asMap().entries.map((entry) {
-                                  return _buildPetTagCard(entry.value, entry.key);
+                                children: _activeAnimalTags
+                                    .asMap()
+                                    .entries
+                                    .map((entry) {
+                                  print("not empty, length: ${_activeAnimalTags.length}");
+                                  print(_activeAnimalTags[0]);
+                                  return _buildPetTagCard(
+                                      entry.value, entry.key);
                                 }).toList(),
                               ),
-
+                              /*
                               const SizedBox(height: 32),
-                              _buildSectionTitle('Recent Orders', icon: Icons.history),
+                              _buildSectionTitle('Recent Orders',
+                                  icon: Icons.history),
                               _orderHistory.isEmpty
-                                  ? _buildEmptyState('No orders found.', 'Your order history will appear here.')
+                                  ? _buildEmptyState('No orders found.',
+                                  'Your order history will appear here.')
                                   : Column(
-                                children: _orderHistory.map((order) => _buildOrderCard(order)).toList(),
+                                children: _orderHistory
+                                    .map((order) =>
+                                    _buildOrderCard(order))
+                                    .toList(),
                               ),
+
+                               */
                             ],
                           ),
                         ),
@@ -755,34 +1044,52 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                         const SizedBox(width: 32),
 
                         // Right column - Settings
-                        Expanded(
-                          child: _buildSettingsPanel(),
-                        ),
+                        /*
+                              Expanded(
+                                child: _buildSettingsPanel(),
+                              ),
+
+                               */
                       ],
                     )
                         : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Pet Tags section (mobile)
-                        _buildSectionTitle('Your Pet Tags', icon: Icons.pets),
+                        _buildSectionTitle('Your Pet Tags',
+                            icon: Icons.pets),
                         _activeAnimalTags.isEmpty
-                            ? _buildEmptyState('No active pet tags found.', 'Add your first pet tag to get started!')
+                            ? _buildEmptyState(
+                            'No active pet tags found.',
+                            'Add your first pet tag to get started!')
                             : Column(
-                          children: _activeAnimalTags.asMap().entries.map((entry) {
-                            return _buildPetTagCard(entry.value, entry.key);
+                          children: _activeAnimalTags
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                            return _buildPetTagCard(
+                                entry.value, entry.key);
                           }).toList(),
                         ),
 
+                        /*
                         const SizedBox(height: 32),
-                        _buildSectionTitle('Recent Orders', icon: Icons.history),
+                        _buildSectionTitle('Recent Orders',
+                            icon: Icons.history),
                         _orderHistory.isEmpty
-                            ? _buildEmptyState('No orders found.', 'Your order history will appear here.')
+                            ? _buildEmptyState('No orders found.',
+                            'Your order history will appear here.')
                             : Column(
-                          children: _orderHistory.map((order) => _buildOrderCard(order)).toList(),
+                          children: _orderHistory
+                              .map(
+                                  (order) => _buildOrderCard(order))
+                              .toList(),
                         ),
 
                         const SizedBox(height: 32),
                         _buildSettingsPanel(),
+
+                         */
                       ],
                     ),
                   ],
@@ -965,6 +1272,312 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
     );
   }
 
+  // Add this function to show the edit dialog
+  void _showEditPetDialog(String tagId, String currentName, String currentPhone, String currentAdditionalInfo) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    final nameController = TextEditingController(text: currentName);
+    final phoneController = TextEditingController(text: currentPhone);
+    final additionalInfoController = TextEditingController(text: currentAdditionalInfo);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            bool isLoading = false;
+
+            Future<void> savePetInfo() async {
+              setState(() {
+                isLoading = true;
+              });
+
+              try {
+                await FirebaseFirestore.instance.collection('tags').doc(tagId).update({
+                  'Name': nameController.text.trim(),
+                  'Phone': phoneController.text.trim(),
+                  'Additional Info': additionalInfoController.text.trim(),
+                });
+
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  _fetchUserData(); // Refresh the pet data
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                        'Pet information updated successfully!',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(20),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating pet information: $e'),
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(20),
+                    ),
+                  );
+                }
+              } finally {
+                if (context.mounted) {
+                  setState(() {
+                    isLoading = false;
+                  });
+                }
+              }
+            }
+
+            Widget buildEditTextField({
+              required TextEditingController controller,
+              required String labelText,
+              String? hintText,
+              TextInputType keyboardType = TextInputType.text,
+              int maxLines = 1,
+              int? maxLength,
+            }) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: TextFormField(
+                  controller: controller,
+                  maxLines: maxLines,
+                  maxLength: maxLength,
+                  decoration: InputDecoration(
+                    labelText: labelText,
+                    hintText: hintText,
+                    filled: true,
+                    fillColor: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.02),
+                    labelStyle: TextStyle(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : Colors.black.withValues(alpha: 0.6),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    hintStyle: TextStyle(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.5)
+                          : Colors.black.withValues(alpha: 0.4),
+                      fontSize: 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.black.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : Colors.black.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(
+                        color: currentGradient.colors.first,
+                        width: 2.0,
+                      ),
+                    ),
+                    counterStyle: TextStyle(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.6)
+                          : Colors.black.withValues(alpha: 0.6),
+                      fontSize: 12,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                  ),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  keyboardType: keyboardType,
+                ),
+              );
+            }
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                constraints: const BoxConstraints(maxWidth: 500),
+                padding: const EdgeInsets.all(24.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? [
+                      Colors.grey[900]!.withValues(alpha: 0.95),
+                      Colors.grey[800]!.withValues(alpha: 0.95),
+                    ]
+                        : [
+                      Colors.white.withValues(alpha: 0.95),
+                      Colors.grey[50]!.withValues(alpha: 0.95),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            gradient: currentGradient,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Edit Pet Information',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: Icon(
+                            Icons.close,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.7)
+                                : Colors.black.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Form fields
+                    buildEditTextField(
+                      controller: nameController,
+                      labelText: 'Pet Name',
+                      hintText: 'Enter your pet\'s name',
+                    ),
+                    buildEditTextField(
+                      controller: phoneController,
+                      labelText: 'Phone Number',
+                      hintText: 'Enter your contact phone number',
+                      keyboardType: TextInputType.phone,
+                    ),
+                    buildEditTextField(
+                      controller: additionalInfoController,
+                      labelText: 'Additional Info',
+                      hintText: 'Enter helpful information for someone who finds your pet',
+                      maxLines: 3,
+                      maxLength: 200,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              side: BorderSide(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.3)
+                                    : Colors.black.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: currentGradient,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: isLoading ? null : savePetInfo,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: isLoading
+                                  ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                                  : const Text(
+                                'Save',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildSettingsContent() {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final currentGradient = AppTheme.getDefaultGradient(context);
@@ -1061,7 +1674,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                   labelText: 'Zip/Postal Code',
                   hintText: 'e.g., 12345',
                   keyboardType: TextInputType.number,
-                  onChanged: (value) => setState(() => _shippingZipCode = value),
+                  onChanged: (value) =>
+                      setState(() => _shippingZipCode = value),
                 ),
               ),
               const SizedBox(width: 16),
@@ -1070,7 +1684,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                   controller: _countryController,
                   labelText: 'Country',
                   hintText: 'e.g., USA',
-                  onChanged: (value) => setState(() => _shippingCountry = value),
+                  onChanged: (value) =>
+                      setState(() => _shippingCountry = value),
                 ),
               ),
             ],
@@ -1105,7 +1720,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                   labelText: 'Expiry Date',
                   hintText: 'MM/YY',
                   keyboardType: TextInputType.datetime,
-                  onChanged: (value) => setState(() => _creditCardExpiry = value),
+                  onChanged: (value) =>
+                      setState(() => _creditCardExpiry = value),
                 ),
               ),
               const SizedBox(width: 16),
@@ -1114,7 +1730,8 @@ class _DashboardPageState extends State<DashboardPage> with TickerProviderStateM
                   controller: _cardHolderController,
                   labelText: 'Cardholder Name',
                   hintText: 'John Doe',
-                  onChanged: (value) => setState(() => _creditCardHolder = value),
+                  onChanged: (value) =>
+                      setState(() => _creditCardHolder = value),
                 ),
               ),
             ],

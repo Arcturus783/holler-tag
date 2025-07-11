@@ -23,21 +23,21 @@ class AppRoutes {
   static const String signin = '/signin';
   static const String product_page =
       '/product_page'; // This is your SHOPPING page
-// static const String scanned_product_detail = '/products/:productId'; // Conceptual, handled by onGenerateRoute
+// static const String scanned_product_detail = '/tags/:tagId'; // Conceptual, handled by onGenerateRoute
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
       options: const FirebaseOptions(
-    apiKey: "AIzaSyDbpGqdo3YDfpcnoH6UXhDUbK7B7EvbmnY",
-    // SECURITY RISK: THIS SHOULD BE SECURED!
-    authDomain: "holler-tag.firebaseapp.com",
-    projectId: "holler-tag",
-    storageBucket: "holler-tag.firebasestorage.app",
-    messagingSenderId: "147037316014",
-    appId: "1:147037316014:web:4f8247a912242943155e3f",
-  ));
+        apiKey: "AIzaSyDbpGqdo3YDfpcnoH6UXhDUbK7B7EvbmnY",
+        // SECURITY RISK: THIS SHOULD BE SECURED!
+        authDomain: "holler-tag.firebaseapp.com",
+        projectId: "holler-tag",
+        storageBucket: "holler-tag.firebasestorage.app",
+        messagingSenderId: "147037316014",
+        appId: "1:147037316014:web:4f8247a912242943155e3f",
+      ));
   runApp(const MyApp());
 }
 
@@ -47,7 +47,7 @@ class _MyAppState extends State<MyApp> {
   void _toggleTheme() {
     setState(() {
       _themeMode =
-          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+      _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     });
   }
 
@@ -71,13 +71,13 @@ class _MyAppState extends State<MyApp> {
             ProductPage(toggleTheme: _toggleTheme) // This is your SHOPPING page
       },
 
-// Use onGenerateRoute for dynamic routes (like /products/:productId from QR scan)
+// Use onGenerateRoute for dynamic routes (like /tags/:tagId from QR scan)
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name!);
         final pathSegments = uri.pathSegments;
 
-// Handle the /products/:productId route for scanned QR codes
-        if (pathSegments.length == 2 && pathSegments[0] == 'products') {
+// Handle the /tags/:tagsId route for scanned QR codes
+        if (pathSegments.length == 2 && pathSegments[0] == 'tags') {
           final productId = pathSegments[1];
           return MaterialPageRoute(
             builder: (context) => ScannedProductDetailPage(
@@ -122,8 +122,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _slideController;
+  late AnimationController _delayedFadeController; // NEW: Controller for delayed fade-in
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _delayedFadeAnimation; // NEW: Animation for delayed fade-in
 
 // Image lists for carousel, responsive to screen size and theme
   final List<String> _lightImageListLarge = [
@@ -169,6 +171,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       vsync: this,
     );
 
+    // NEW: Initialize delayed fade controller
+    _delayedFadeController = AnimationController(
+      duration: const Duration(milliseconds: 1000), // Fade-in duration
+      vsync: this,
+    );
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -185,15 +193,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       curve: Curves.easeOutCubic,
     ));
 
-// Start animations
+    // NEW: Create delayed fade animation
+    _delayedFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _delayedFadeController,
+      curve: Curves.easeInOut,
+    ));
+
+// Start existing animations
     _fadeController.forward();
     _slideController.forward();
+
+    // NEW: Start delayed fade animation after 1.75 seconds
+    Future.delayed(const Duration(milliseconds: 1750), () {
+      if (mounted) {
+        _delayedFadeController.forward();
+      }
+    });
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    _delayedFadeController.dispose(); // NEW: Dispose delayed fade controller
     super.dispose();
   }
 
@@ -217,17 +242,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     List<String> imageUrlsToUse;
     if (Theme.of(context).brightness == Brightness.dark) {
       imageUrlsToUse =
-          screenWidth >= 800 ? _darkImageListLarge : _darkImageListSmall;
+      screenWidth >= 800 ? _darkImageListLarge : _darkImageListSmall;
     } else {
       imageUrlsToUse =
-          screenWidth >= 800 ? _lightImageListLarge : _lightImageListSmall;
+      screenWidth >= 800 ? _lightImageListLarge : _lightImageListSmall;
     }
 
 // Select background image based on current theme
     final String currentBackgroundImage =
-        Theme.of(context).brightness == Brightness.dark
-            ? _darkBackgroundImage
-            : _lightBackgroundImage;
+    Theme.of(context).brightness == Brightness.dark
+        ? _darkBackgroundImage
+        : _lightBackgroundImage;
 
 // Get the current gradient from the app theme
     final currentGradient = AppTheme.getDefaultGradient(context);
@@ -287,27 +312,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-// Brand title with enhanced typography
-                              ShaderMask(
-                                blendMode: BlendMode.srcIn,
-                                shaderCallback: (bounds) =>
-                                    currentGradient.createShader(
-                                  Rect.fromLTWH(
-                                      0, 0, bounds.width, bounds.height),
-                                ),
-                                child: Text(
-                                  "Holler Tag",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: titleFontSize,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 2.0,
-                                    color: Colors.white,
+// Brand title with enhanced typography - NOW with delayed fade
+                              FadeTransition(
+                                opacity: _delayedFadeAnimation,
+                                child: ShaderMask(
+                                  blendMode: BlendMode.srcIn,
+                                  shaderCallback: (bounds) =>
+                                      currentGradient.createShader(
+                                        Rect.fromLTWH(
+                                            0, 0, bounds.width, bounds.height),
+                                      ),
+                                  child: Text(
+                                    "Holler Tag",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: titleFontSize,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 2.0,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 12),
-// Subtitle with better typography
+// Subtitle with better typography - NO fade (stays visible)
                               Text(
                                 "Built for safety. Built to last.\nBuilt for you.",
                                 textAlign: TextAlign.center,
@@ -320,117 +348,120 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 ),
                               ),
                               const SizedBox(height: 32),
-// Enhanced button row
-                              Wrap(
-                                spacing: 16.0,
-                                runSpacing: 12.0,
-                                alignment: WrapAlignment.center,
-                                children: [
+// Enhanced button row - NOW with delayed fade
+                              FadeTransition(
+                                opacity: _delayedFadeAnimation,
+                                child: Wrap(
+                                  spacing: 16.0,
+                                  runSpacing: 12.0,
+                                  alignment: WrapAlignment.center,
+                                  children: [
 // Register button with gradient background
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      gradient: currentGradient,
-                                      borderRadius: BorderRadius.circular(30),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: currentGradient.colors.first
-                                              .withValues(alpha: 0.3),
-                                          blurRadius: 20,
-                                          offset: const Offset(0, 8),
-                                        ),
-                                      ],
-                                    ),
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.push(context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const ScannedProductDetailPage(productId: "qXOsghS7Sx0uht6JcBby")
-                                        ),
-                                        );
-                                        /*
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const QrTo3DApp(),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        gradient: currentGradient,
+                                        borderRadius: BorderRadius.circular(30),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: currentGradient.colors.first
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 20,
+                                            offset: const Offset(0, 8),
                                           ),
-                                        );
-                                         */
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.transparent,
-                                        shadowColor: Colors.transparent,
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal:
-                                              screenWidth < 600 ? 32 : 40,
-                                          vertical: screenWidth < 600 ? 16 : 20,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(30),
-                                        ),
+                                        ],
                                       ),
-                                      child: Text(
-                                        "Register",
-                                        style: TextStyle(
-                                          fontSize: subtitleFontSize * 0.9,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                          letterSpacing: 1.0,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.push(context,
+                                            MaterialPageRoute(
+                                                builder: (context) => const ScannedProductDetailPage(productId: "qXOsghS7Sx0uht6JcBby")
+                                            ),
+                                          );
+                                          /*
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const QrTo3DApp(),
+                                            ),
+                                          );
+                                           */
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          shadowColor: Colors.transparent,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal:
+                                            screenWidth < 600 ? 32 : 40,
+                                            vertical: screenWidth < 600 ? 16 : 20,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                            BorderRadius.circular(30),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          "Register",
+                                          style: TextStyle(
+                                            fontSize: subtitleFontSize * 0.9,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                            letterSpacing: 1.0,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
 // Shop Now button with glass morphism effect
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(30),
-                                      border: Border.all(
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(30),
+                                        border: Border.all(
+                                          color:
+                                          Colors.white.withValues(alpha: 0.3),
+                                          width: 2,
+                                        ),
                                         color:
-                                            Colors.white.withValues(alpha: 0.3),
-                                        width: 2,
+                                        Colors.white.withValues(alpha: 0.1),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.1),
+                                            blurRadius: 20,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                        ],
                                       ),
-                                      color:
-                                          Colors.white.withValues(alpha: 0.1),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.1),
-                                          blurRadius: 20,
-                                          offset: const Offset(0, 8),
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pushNamed(
+                                              context, AppRoutes.product_page);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          shadowColor: Colors.transparent,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal:
+                                            screenWidth < 600 ? 32 : 40,
+                                            vertical: screenWidth < 600 ? 16 : 20,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                            BorderRadius.circular(30),
+                                          ),
                                         ),
-                                      ],
-                                    ),
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pushNamed(
-                                            context, AppRoutes.product_page);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.transparent,
-                                        shadowColor: Colors.transparent,
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal:
-                                              screenWidth < 600 ? 32 : 40,
-                                          vertical: screenWidth < 600 ? 16 : 20,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(30),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        "Shop Now",
-                                        style: TextStyle(
-                                          fontSize: subtitleFontSize * 0.9,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                          letterSpacing: 1.0,
+                                        child: Text(
+                                          "Shop Now",
+                                          style: TextStyle(
+                                            fontSize: subtitleFontSize * 0.9,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                            letterSpacing: 1.0,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -486,8 +517,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             blendMode: BlendMode.srcIn,
                             shaderCallback: (bounds) =>
                                 currentGradient.createShader(
-                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                            ),
+                                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                                ),
                             child: Text(
                               "Our Mission",
                               textAlign: TextAlign.center,
@@ -503,21 +534,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 // Mission content in cards
                           _buildMissionCard(
                             "Innovation & Safety",
-                            "We're committed to creating products that prioritize your safety without compromising on innovation. Every Holler Tag is designed with cutting-edge technology to protect what matters most.",
+                            "We're committed to creating products that prioritize your pet's safety without compromising on innovation. The Holler Tag is designed with cutting-edge technology to protect what matters most.",
                             bodyTextSize,
                             isDark,
                           ),
                           const SizedBox(height: 20),
                           _buildMissionCard(
                             "Built to Last",
-                            "Durability is at the core of our design philosophy. Our products are engineered to withstand the test of time, ensuring reliable performance when you need it most.",
+                            "Durability is at the core of our design philosophy. Our products are 3D printed to withstand the daily adventures of your pet, ensuring reliable performance where you need it most.",
                             bodyTextSize,
                             isDark,
                           ),
                           const SizedBox(height: 20),
                           _buildMissionCard(
                             "Personalized Experience",
-                            "We understand that every user is unique. That's why we've built our platform to adapt to your specific needs, providing a truly personalized experience that grows with you.",
+                            "We understand that every user is unique. That's why we've built our platform to adapt to your specific needs regarding privacy, design customization, and features you, our users, request.",
                             bodyTextSize,
                             isDark,
                           ),

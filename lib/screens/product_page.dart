@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:barcode/barcode.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AppRoutes {
   static const String signin = '/signin';
@@ -36,7 +37,6 @@ class _ProductPageState extends State<ProductPage>
   final ValueNotifier<String?> _selectedSize = ValueNotifier<String?>(null);
   final ValueNotifier<XFile?> _selectedImage = ValueNotifier<XFile?>(null);
   final ValueNotifier<String> _nameController = ValueNotifier<String>('');
-  final ValueNotifier<String> _addressController = ValueNotifier<String>('');
   final ValueNotifier<String> _phoneController = ValueNotifier<String>('');
   final ValueNotifier<String> _additionalInfoController = ValueNotifier<String>('');
 
@@ -271,8 +271,8 @@ class _ProductPageState extends State<ProductPage>
           end: Alignment.bottomRight,
           colors: isDark
               ? [
+            Colors.grey[850]!.withValues(alpha: 0.95),
             Colors.grey[800]!.withValues(alpha: 0.95),
-            Colors.grey[700]!.withValues(alpha: 0.95),
           ]
               : [
             Colors.white.withValues(alpha: 0.95),
@@ -315,8 +315,8 @@ class _ProductPageState extends State<ProductPage>
           end: Alignment.bottomRight,
           colors: isDark
               ? [
+            Colors.grey[850]!.withValues(alpha: 0.95),
             Colors.grey[800]!.withValues(alpha: 0.95),
-            Colors.grey[700]!.withValues(alpha: 0.95),
           ]
               : [
             Colors.white.withValues(alpha: 0.95),
@@ -452,6 +452,8 @@ class _ProductPageState extends State<ProductPage>
   Widget _buildCustomizationSection(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final currentGradient = AppTheme.getDefaultGradient(context);
+    final double screenWidth = MediaQuery.of(context).size.width;
+    const double breakpoint = 900.0;
 
     final List<Color> colors = [
       Colors.red,
@@ -465,15 +467,15 @@ class _ProductPageState extends State<ProductPage>
     ];
 
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(28.0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
               ? [
+            Colors.grey[850]!.withValues(alpha: 0.95),
             Colors.grey[800]!.withValues(alpha: 0.95),
-            Colors.grey[700]!.withValues(alpha: 0.95),
           ]
               : [
             Colors.white.withValues(alpha: 0.95),
@@ -502,29 +504,29 @@ class _ProductPageState extends State<ProductPage>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: currentGradient,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
                       color: currentGradient.colors.first.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 child: const Icon(
                   Icons.palette,
                   color: Colors.white,
-                  size: 20,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Text(
                 'Customize Your HollerTag',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.w700,
                   color: isDark ? Colors.white : Colors.black87,
                   letterSpacing: 0.3,
@@ -532,305 +534,278 @@ class _ProductPageState extends State<ProductPage>
               ),
             ],
           ),
-          const SizedBox(height: 24),
-
-          // Color selection
-          _buildColorSection(colors, isDark),
           const SizedBox(height: 32),
 
-          // Contact information section
-          _buildContactSection(context, isDark, currentGradient),
-          const SizedBox(height: 24),
+          // Color selection and contact information - responsive layout
+          screenWidth > breakpoint
+              ? _buildWideCustomizationLayout(colors, isDark, currentGradient, context)
+              : _buildNarrowCustomizationLayout(colors, isDark, currentGradient, context),
 
-          // Info text
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.blue.withValues(alpha: 0.1)
-                  : Colors.blue.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.blue.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  color: Colors.blue,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'This information will be accessible via the QR code on your HollerTag.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.8)
-                          : Colors.black.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Feedback section
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.02),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 1,
-              ),
-            ),
-            child: Text(
-              'Your feedback is important to us. If you have any suggestions for features you would like to see, we\'d love to hear them! Please reach out via the Contact Us option at the top.',
-              style: TextStyle(
-                fontSize: 14,
-                fontStyle: FontStyle.italic,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.7)
-                    : Colors.black.withValues(alpha: 0.6),
-              ),
-            ),
-          ),
           const SizedBox(height: 32),
 
-          // Purchase button
-          SizedBox(
-            width: double.infinity,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: currentGradient,
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: [
-                  BoxShadow(
-                    color: currentGradient.colors.first.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  if (AuthService.getCurrentUser() != null) {
-                    createNewProductTag(
-                      address: _addressController.value,
-                      description: _additionalInfoController.value,
-                      yourBaseDomain: 'hollertag.com',
-                      phoneNumber: _phoneController.value,
-                    );
-                  } else {
-                    _showPurchaseSignUpPopup(context);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shopping_cart,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Purchase HollerTag',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // Bottom section with improved visual hierarchy
+          _buildBottomSection(isDark, currentGradient),
         ],
       ),
     );
   }
 
-  Widget _buildColorSection(List<Color> colors, bool isDark) {
+  // New method for wide screen layout (laptop/desktop) with perfect alignment
+  Widget _buildWideCustomizationLayout(List<Color> colors, bool isDark, LinearGradient currentGradient, BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Select Color',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white : Colors.black87,
-            letterSpacing: 0.3,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ValueListenableBuilder<Color?>(
-          valueListenable: _selectedColor,
-          builder: (context, selectedColor, child) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.02),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.1),
-                  width: 1,
-                ),
-              ),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 8, // Changed from 4 to 8 for smaller dots
-                  childAspectRatio: 1.0,
-                  crossAxisSpacing: 8.0, // Reduced spacing
-                  mainAxisSpacing: 8.0,   // Reduced spacing
-                ),
-                itemCount: colors.length,
-                itemBuilder: (context, index) {
-                  final color = colors[index];
-                  final isSelected = selectedColor == color;
-
-                  return InkWell(
-                    onTap: () => _selectedColor.value = color,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 32,  // Fixed smaller size
-                      height: 32, // Fixed smaller size
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? color
-                              : Colors.grey.withValues(alpha: 0.3),
-                          width: isSelected ? 2.5 : 1.5, // Reduced border width
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.3),
-                            blurRadius: 6, // Reduced shadow blur
-                            offset: const Offset(0, 2), // Reduced shadow offset
-                          ),
-                        ]
-                            : null,
-                      ),
-                      child: Container(
-                        margin: const EdgeInsets.all(3), // Reduced margin
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: color,
-                        ),
-                        child: isSelected
-                            ? const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 12, // Smaller check icon
-                        )
-                            : null,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContactSection(BuildContext context, bool isDark, LinearGradient currentGradient) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        // Row for section titles - perfectly aligned
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: currentGradient,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: currentGradient.colors.first.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.contact_page,
-                color: Colors.white,
-                size: 20,
+            // Left column title
+            Expanded(
+              flex: 1,
+              child: _buildSectionTitle(
+                'Select Color',
+                Icons.palette_outlined,
+                isDark,
+                fontSize: 18,
               ),
             ),
-            const SizedBox(width: 12),
-            Text(
-              'Contact Information',
-              style: TextStyle(
+            const SizedBox(width: 40),
+            // Right column title
+            Expanded(
+              flex: 2,
+              child: _buildSectionTitle(
+                'Contact Information',
+                Icons.contact_page_outlined,
+                isDark,
+                gradient: currentGradient,
                 fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black87,
-                letterSpacing: 0.3,
               ),
             ),
           ],
         ),
         const SizedBox(height: 20),
+        // Row for section content - aligned to start
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left column - Color selection content
+            Expanded(
+              flex: 1,
+              child: _buildColorGrid(colors, isDark),
+            ),
+            const SizedBox(width: 40),
+            // Right column - Contact information content
+            Expanded(
+              flex: 2,
+              child: _buildContactFields(context, isDark, currentGradient),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
+  // New method for narrow screen layout (mobile/tablet)
+  Widget _buildNarrowCustomizationLayout(List<Color> colors, bool isDark, LinearGradient currentGradient, BuildContext context) {
+    return Column(
+      children: [
+        // Color selection
+        _buildSectionTitle('Select Color', Icons.palette_outlined, isDark),
+        const SizedBox(height: 16),
+        _buildColorGrid(colors, isDark),
+        const SizedBox(height: 32),
+        // Contact information section
+        _buildSectionTitle('Contact Information', Icons.contact_page_outlined, isDark, gradient: currentGradient),
+        const SizedBox(height: 16),
+        _buildContactFields(context, isDark, currentGradient),
+      ],
+    );
+  }
+
+  // Helper method to build consistent section titles
+  Widget _buildSectionTitle(String title, IconData icon, bool isDark, {LinearGradient? gradient, double fontSize = 16}) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: gradient,
+            color: gradient == null ? _selectedColor.value : Colors.black.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: gradient?.colors.first ?? (isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.1)),
+              width: 1,
+            ),
+            boxShadow: gradient != null ? [
+              BoxShadow(
+                color: gradient.colors.first.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ] : null,
+          ),
+          child: Icon(
+            icon,
+            color: gradient != null ? Colors.white : (isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.6)),
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black87,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Enhanced color grid with better visual design
+  Widget _buildColorGrid(List<Color> colors, bool isDark) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    const double breakpoint = 900.0;
+
+    return ValueListenableBuilder<Color?>(
+      valueListenable: _selectedColor,
+      builder: (context, selectedColor, child) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.02),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.1),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+              children: [ GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: screenWidth > breakpoint ? 4 : 8,
+                  childAspectRatio: 1.0,
+                  crossAxisSpacing: screenWidth > breakpoint ? 16.0 : 12.0,
+                  mainAxisSpacing: screenWidth > breakpoint ? 16.0 : 12.0,
+                ),
+                itemCount: colors.length,
+                itemBuilder: (context, index) {
+                  final color = colors[index];
+                  final isSelected = selectedColor == color;
+                  final dotSize = screenWidth > breakpoint ? 56.0 : 32.0;
+                  final iconSize = screenWidth > breakpoint ? 18.0 : 12.0;
+                  final borderWidth = screenWidth > breakpoint ? 3.0 : 2.5;
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () =>
+                      setState((){
+                        _selectedColor.value = color;
+                      }),
+                      borderRadius: BorderRadius.circular(dotSize / 2),
+                      child: Container(
+                        width: dotSize,
+                        height: dotSize,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? color
+                                : Colors.grey.withValues(alpha: 0.3),
+                            width: isSelected ? borderWidth : 1.5,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.4),
+                              blurRadius: screenWidth > breakpoint ? 12 : 8,
+                              offset: Offset(0, screenWidth > breakpoint ? 4 : 2),
+                            ),
+                          ]
+                              : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          margin: EdgeInsets.all(screenWidth > breakpoint ? 5 : 3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: color,
+                          ),
+                          child: isSelected
+                              ? Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: iconSize,
+                          )
+                              : null,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ]
+          )
+        );
+      },
+    );
+  }
+
+  // Enhanced contact fields with better spacing and validation indicators
+  Widget _buildContactFields(BuildContext context, bool isDark, LinearGradient currentGradient) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         // Pet name field
         _buildTextField(
           label: 'Pet\'s Name *',
           hint: "Enter your pet's name",
           valueNotifier: _nameController,
           context: context,
+          icon: Icons.pets_outlined,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // Phone field
         _buildTextField(
-          label: 'Phone Number',
+          label: 'Phone Number *',
           hint: 'Enter your phone number',
           valueNotifier: _phoneController,
           keyboardType: TextInputType.phone,
           context: context,
+          icon: Icons.phone_outlined,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // Additional info field
         _buildTextField(
-          label: 'Lost Pet Information',
+          label: 'Lost Pet Information *',
           hint: 'Enter your address, email, or any info that would help someone return your pet if lost',
           valueNotifier: _additionalInfoController,
-          maxLines: 3,
+          maxLines: 4,
           maxLength: 200,
           context: context,
+          icon: Icons.info_outlined,
         ),
       ],
     );
@@ -844,6 +819,7 @@ class _ProductPageState extends State<ProductPage>
     TextInputType? keyboardType,
     int? maxLines,
     int? maxLength,
+    IconData? icon,
   }) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final currentGradient = AppTheme.getDefaultGradient(context);
@@ -851,76 +827,104 @@ class _ProductPageState extends State<ProductPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white : Colors.black87,
-            letterSpacing: 0.3,
-          ),
+        Row(
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 16,
+                color: isDark ? Colors.white.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         ValueListenableBuilder<String>(
           valueListenable: valueNotifier,
           builder: (context, value, child) {
-            return TextFormField(
-              onChanged: (text) {
-                if (maxLength != null && text.length <= maxLength) {
-                  valueNotifier.value = text;
-                } else if (maxLength == null) {
-                  valueNotifier.value = text;
-                }
-              },
-              keyboardType: keyboardType,
-              maxLines: maxLines ?? 1,
-              maxLength: maxLength,
-              decoration: InputDecoration(
-                hintText: hint,
-                filled: true,
-                fillColor: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.02),
-                hintStyle: TextStyle(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.5)
-                      : Colors.black.withValues(alpha: 0.4),
-                  fontSize: 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.2),
+            final bool hasValue = value.trim().isNotEmpty;
+
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.1),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide(
-                    color: currentGradient.colors.first,
-                    width: 2.0,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.all(16.0),
-                counterStyle: TextStyle(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.6)
-                      : Colors.black.withValues(alpha: 0.5),
-                ),
+                ],
               ),
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black87,
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
+              child: TextFormField(
+                onChanged: (text) {
+                  if (maxLength != null && text.length <= maxLength) {
+                    valueNotifier.value = text;
+                  } else if (maxLength == null) {
+                    valueNotifier.value = text;
+                  }
+                },
+                keyboardType: keyboardType,
+                maxLines: maxLines ?? 1,
+                maxLength: maxLength,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  filled: true,
+                  fillColor: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.03),
+                  hintStyle: TextStyle(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.5)
+                        : Colors.black.withValues(alpha: 0.4),
+                    fontSize: 14,
+                  ),
+                  suffixIcon: hasValue ? Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 20,
+                  ) : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : Colors.black.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(
+                      color: currentGradient.colors.first,
+                      width: 2.0,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.all(maxLines != null && maxLines > 1 ? 16.0 : 16.0),
+                  counterStyle: TextStyle(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.6)
+                        : Colors.black.withValues(alpha: 0.5),
+                  ),
+                ),
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             );
           },
@@ -929,9 +933,172 @@ class _ProductPageState extends State<ProductPage>
     );
   }
 
+  // Enhanced bottom section with better visual hierarchy
+  Widget _buildBottomSection(bool isDark, LinearGradient currentGradient) {
+    return Column(
+      children: [
+        // Info cards row
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoCard(
+                icon: Icons.info_outline,
+                title: 'QR Code Access',
+                description: 'This information will be accessible via the QR code on your HollerTag.',
+                color: Colors.blue,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildInfoCard(
+                icon: Icons.feedback_outlined,
+                title: 'We Value Feedback',
+                description: 'Have suggestions? Contact us through the menu above.',
+                color: Colors.orange,
+                isDark: isDark,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 32),
+
+        // Enhanced purchase button
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: currentGradient,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: currentGradient.colors.first.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: () {
+              if (AuthService.getCurrentUser() != null) {
+                if(_additionalInfoController.value.trim().isEmpty ||
+                    _nameController.value.trim().isEmpty ||
+                    _phoneController.value.trim().isEmpty){
+                  _showSnackBar("Please fill out all required fields!", Colors.red);
+                } else{
+                  createNewProductTag(
+                    name: _nameController.value,
+                    description: _additionalInfoController.value,
+                    yourBaseDomain: 'hollertag.co',
+                    phoneNumber: _phoneController.value,
+                  );
+                  _showSnackBar("HollerTag purchased successfully!", Colors.green);
+                }
+              } else {
+                _showPurchaseSignUpPopup(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.shopping_cart,
+                  color: Colors.white,
+                  size: 22,
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Purchase HollerTag',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Helper method for info cards
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : Colors.black.withValues(alpha: 0.6),
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Backend functions (unchanged)
   void createNewProductTag({
-    required String address,
+    required String name,
     required String description,
     required String phoneNumber,
     required String yourBaseDomain,
@@ -950,7 +1117,7 @@ class _ProductPageState extends State<ProductPage>
         'Additional Info': description,
         'Found': false,
         'Found Message': "",
-        'Name': _nameController.value.isEmpty ? "Woofer" : _nameController.value,
+        'Name': name,
         'ownerId': ownerId,
       };
 
@@ -964,15 +1131,19 @@ class _ProductPageState extends State<ProductPage>
       final String newProductId = documentRef.id;
       print('Successfully created new product tag with ID: $newProductId');
 
-      final String productUrl = 'https://$yourBaseDomain/products/$newProductId';
+      final String productUrl = 'https://$yourBaseDomain/tags/$newProductId';
+
       final dm = Barcode.qrCode();
       final svg = dm.toSvg(productUrl, width: 200, height: 200);
-      await File('barcode.svg').writeAsString(svg);
+      //now use the svg to do smth
+
     } catch (e) {
       print('Error in createNewProductTag: $e');
       rethrow;
     }
   }
+
+
 
   Future<void> _showImagePickerDialog(BuildContext context, ValueNotifier<XFile?> selectedImage) async {
     showDialog(
@@ -1160,6 +1331,27 @@ class _ProductPageState extends State<ProductPage>
           ),
         );
       },
+    );
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.3,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(20),
+      ),
     );
   }
 

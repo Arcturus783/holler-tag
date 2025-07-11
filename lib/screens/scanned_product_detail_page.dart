@@ -89,7 +89,7 @@ class _ScannedProductDetailPageState extends State<ScannedProductDetailPage>
     try {
       await FirebaseFirestore.instance.collection('tags').doc(widget.productId).update({
         'Found': true,
-        'Found Message': message.trim(),
+        'Found Message': message,
       });
 
       setState(() {
@@ -301,7 +301,7 @@ class _ScannedProductDetailPageState extends State<ScannedProductDetailPage>
             maxLines: 6,
             maxLength: 200,
             decoration: InputDecoration(
-              hintText: 'Let the owner know where you found their pet, your contact info, or any other helpful information...',
+              hintText: 'Let the owner know where you found their pet, your contact info, and any other helpful information...',
               filled: true,
               fillColor: isDark
                   ? Colors.white.withValues(alpha: 0.05)
@@ -366,7 +366,7 @@ class _ScannedProductDetailPageState extends State<ScannedProductDetailPage>
               child: ElevatedButton(
                 onPressed: _isSubmitting
                     ? null
-                    : () => sendMessage(_messageController.text),
+                    : () => sendMessage(_messageController.text.trim()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,

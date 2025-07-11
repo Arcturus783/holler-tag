@@ -451,7 +451,7 @@ class _DashboardPageState extends State<DashboardPage>
           colors: isDark
               ? [
             Colors.grey[800]!.withValues(alpha: 0.95),
-            Colors.grey[700]!.withValues(alpha: 0.95),
+            Colors.grey[850]!.withValues(alpha: 0.95),
           ]
               : [
             Colors.white.withValues(alpha: 0.95),

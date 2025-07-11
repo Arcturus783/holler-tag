@@ -667,7 +667,8 @@ class _MyAppBarState extends State<MyAppBar> with TickerProviderStateMixin {
         ],
       ),
       child: AppBar(
-        backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        backgroundColor: Color.fromARGB(230, 25, 25, 30),
         elevation: 0,
         centerTitle: true,
         title: screenWidth < mobileBreakpoint

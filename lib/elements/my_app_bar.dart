@@ -20,9 +20,8 @@ class AppRoutes {
 }
 
 class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final VoidCallback toggleTheme;
 
-  const MyAppBar({super.key, required this.toggleTheme});
+  const MyAppBar({super.key});
 
   @override
   State<MyAppBar> createState() => _MyAppBarState();

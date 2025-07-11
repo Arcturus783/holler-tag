@@ -55,7 +55,6 @@ class ProductPage extends StatelessWidget {
 
     return Scaffold(
       appBar: MyAppBar(
-        toggleTheme: toggleTheme,
       ),
       body: SingleChildScrollView(
         child: Padding(

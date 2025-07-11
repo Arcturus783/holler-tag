@@ -43,7 +43,7 @@ class _ShoppingPageState extends State<ShoppingPage> {
   Widget build(BuildContext context) {
     Color textColor = Theme.of(context).colorScheme.onSurface;
     return Scaffold(
-        appBar: MyAppBar(toggleTheme: widget.toggleTheme),
+        appBar: MyAppBar(),
         body: SingleChildScrollView(
             child: Column(children: [
           if (MediaQuery.of(context).size.width >= 800)

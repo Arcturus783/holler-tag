@@ -868,7 +868,7 @@ class _DashboardPageState extends State<DashboardPage>
     final currentGradient = AppTheme.getDefaultGradient(context);
 
     return Scaffold(
-      appBar: MyAppBar(toggleTheme: widget.toggleTheme),
+      appBar: MyAppBar(),
       backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
       body: Container(
         decoration: BoxDecoration(

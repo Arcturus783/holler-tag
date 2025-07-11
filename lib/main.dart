@@ -41,13 +41,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.system;
 
@@ -89,7 +82,6 @@ class _MyAppState extends State<MyApp> {
           return MaterialPageRoute(
             builder: (context) => ScannedProductDetailPage(
               productId: productId,
-              toggleTheme: _toggleTheme,
             ),
             settings: settings, // Important for browser history and back button
           );
@@ -108,6 +100,13 @@ class _MyAppState extends State<MyApp> {
       },
     );
   }
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
 }
 
 class HomePage extends StatefulWidget {
@@ -235,7 +234,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: MyAppBar(toggleTheme: widget.toggleTheme),
+      appBar: MyAppBar(),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -343,6 +342,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     ),
                                     child: ElevatedButton(
                                       onPressed: () {
+                                        Navigator.push(context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const ScannedProductDetailPage(productId: "qXOsghS7Sx0uht6JcBby")
+                                        ),
+                                        );
+                                        /*
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -350,6 +355,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                 const QrTo3DApp(),
                                           ),
                                         );
+                                         */
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.transparent,

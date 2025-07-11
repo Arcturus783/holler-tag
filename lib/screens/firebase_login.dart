@@ -485,7 +485,7 @@ class _FirebaseLoginPageState extends State<FirebaseLoginPage>
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: MyAppBar(toggleTheme: widget.toggleTheme),
+      appBar: MyAppBar(),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Center(

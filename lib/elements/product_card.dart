@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:myapp/elements/custom_button.dart';
 import 'package:myapp/backend/product.dart';
 import 'package:myapp/main.dart';
-import 'package:myapp/screens/product_page.dart';
+import 'package:myapp/screens/product_page.dart' hide AppRoutes;
 
 class ProductCard extends StatefulWidget {
   final Product product;

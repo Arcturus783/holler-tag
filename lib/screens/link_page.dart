@@ -7,7 +7,6 @@ import 'package:myapp/elements/app_theme.dart';
 import 'package:myapp/backend/google_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:myapp/elements/image_cropper_popup.dart';
-import 'package:myapp/main.dart';
 
 class LinkTagScreen extends StatefulWidget {
   final VoidCallback toggleTheme;

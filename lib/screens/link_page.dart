@@ -1,9 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:myapp/elements/my_app_bar.dart';
 import 'package:myapp/elements/app_theme.dart';
+import 'package:myapp/backend/google_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:myapp/elements/image_cropper_popup.dart';
+import 'package:myapp/main.dart';
 
 class LinkTagScreen extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -27,12 +31,27 @@ class _LinkTagScreenState extends State<LinkTagScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  // Form controllers and state
+  // Auth related state
+  UserCredential? userCred;
+  String _status = "Ready to sign in";
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _isLoading = false;
+  bool _showEmailForm = false;
+  bool _isSignUp = false;
+
+  // Email form controllers for auth
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  // Form controllers and state for tag linking
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _additionalInfoController = TextEditingController();
 
-  // Value notifiers for form state (removed color-related notifiers)
+  // Value notifiers for form state
   final ValueNotifier<String?> _selectedSize = ValueNotifier<String?>(null);
   final ValueNotifier<XFile?> _selectedImage = ValueNotifier<XFile?>(null);
 
@@ -80,13 +99,309 @@ class _LinkTagScreenState extends State<LinkTagScreen>
     _additionalInfoController.dispose();
     _selectedSize.dispose();
     _selectedImage.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _fullNameController.dispose();
     super.dispose();
+  }
+
+  // Authentication methods (from Firebase login page)
+  Future<bool> userDocumentExists(String userId) async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      return userDoc.exists;
+    } catch (e) {
+      print("Error checking document existence: $e");
+      return false;
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _status = "Signing in with Google...";
+    });
+
+    try {
+      GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      userCred = await _auth.signInWithPopup(googleProvider);
+      setState(() {
+        _status = "Successfully signed in!";
+        _isLoading = false;
+      });
+
+      bool exists = await userDocumentExists(userCred!.user!.uid);
+      if (!exists) {
+        final Map<String, dynamic> userData = {
+          "email": userCred!.user!.email,
+          "pets": [],
+          "provider": "google"
+        };
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCred!.user!.uid)
+            .set(userData);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _status = "Sign-in failed. Please try again.";
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> signInWithEmail() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _status = _isSignUp ? "Creating your account..." : "Signing you in...";
+    });
+
+    try {
+      if (_isSignUp) {
+        userCred = await _auth.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        if (userCred?.user != null && _fullNameController.text.trim().isNotEmpty) {
+          await userCred!.user!.updateDisplayName(_fullNameController.text.trim());
+          await userCred!.user!.reload();
+        }
+
+        final Map<String, dynamic> userData = {
+          "email": userCred!.user!.email,
+          "pets": [],
+          "provider": "email"
+        };
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCred!.user!.uid)
+            .set(userData);
+
+        if (userCred?.user != null && !userCred!.user!.emailVerified) {
+          await userCred!.user!.sendEmailVerification();
+          setState(() {
+            _status = "Account created! Please verify your email address.";
+          });
+        } else {
+          setState(() {
+            _status = "Account created successfully!";
+          });
+        }
+      } else {
+        userCred = await _auth.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        if (userCred?.user != null && !userCred!.user!.emailVerified) {
+          setState(() {
+            _status = "Please verify your email address first.";
+          });
+        } else {
+          setState(() {
+            _status = "Successfully signed in!";
+          });
+        }
+      }
+
+      _clearForm();
+      setState(() {
+        _showEmailForm = false;
+        _isLoading = false;
+      });
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _isLoading = false;
+        _status = _getFirebaseErrorMessage(e);
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _status = "An error occurred. Please try again.";
+      });
+    }
+  }
+
+  String _getFirebaseErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return 'No account found with this email address.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email.';
+      case 'weak-password':
+        return 'Please choose a stronger password.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      default:
+        return 'Authentication failed. Please try again.';
+    }
+  }
+
+  void _clearForm() {
+    _emailController.clear();
+    _passwordController.clear();
+    _confirmPasswordController.clear();
+    _fullNameController.clear();
+  }
+
+  Future<void> resendVerificationEmail() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        setState(() {
+          _status = "Verification email sent successfully!";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _status = "Failed to send verification email.";
+      });
+    }
+  }
+
+  Future<void> resetPassword() async {
+    if (_emailController.text.trim().isEmpty) {
+      setState(() {
+        _status = "Please enter your email address first.";
+      });
+      return;
+    }
+
+    try {
+      await _auth.sendPasswordResetEmail(email: _emailController.text.trim());
+      setState(() {
+        _status = "Password reset email sent!";
+      });
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _status = _getFirebaseErrorMessage(e);
+      });
+    }
+  }
+
+  void _toggleEmailForm() {
+    setState(() {
+      _showEmailForm = !_showEmailForm;
+      if (!_showEmailForm) {
+        _isSignUp = false;
+        _clearForm();
+      }
+    });
+  }
+
+  void _toggleSignUpMode() {
+    setState(() {
+      _isSignUp = !_isSignUp;
+      _confirmPasswordController.clear();
+      _fullNameController.clear();
+    });
+  }
+
+  // Tag linking functionality
+  Future<void> createPetTag() async {
+    if (_nameController.text.trim().isEmpty ||
+        _phoneController.text.trim().isEmpty ||
+        _additionalInfoController.text.trim().isEmpty) {
+      _showSnackBar("Please fill out all required fields!", Colors.red);
+      return;
+    }
+
+    try {
+      final User? currentUser = AuthService.getCurrentUser();
+
+      if (currentUser == null) {
+        throw Exception('User not authenticated. Please log in to create a tag.');
+      }
+
+      setState(() {
+        _isLoading = true;
+      });
+
+      final String ownerId = currentUser.uid;
+
+      // Check if tag already exists
+      DocumentSnapshot existingTag = await FirebaseFirestore.instance
+          .collection('tags')
+          .doc(widget.tagId)
+          .get();
+
+      if (existingTag.exists) {
+        _showSnackBar("This tag has already been claimed! Contact us if you believe this is an error.", Colors.orange);
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Create the tag document with the specific ID
+      final Map<String, dynamic> newTagData = {
+        'Phone': _phoneController.text.trim(),
+        'Additional Info': _additionalInfoController.text.trim(),
+        'Found': false,
+        'Found Message': "",
+        'Name': _nameController.text.trim(),
+        'ownerId': ownerId,
+        'created_at': FieldValue.serverTimestamp(),
+      };
+
+      // Set the document with the scanned tag ID
+      await FirebaseFirestore.instance
+          .collection('tags')
+          .doc(widget.tagId)
+          .set(newTagData);
+
+      // Update user's pets array
+      await FirebaseFirestore.instance.collection('users').doc(ownerId).update({
+        'pets': FieldValue.arrayUnion([widget.tagId])
+      });
+
+      _showSnackBar("Pet profile created successfully!", Colors.green);
+
+      // Clear the form
+      _nameController.clear();
+      _phoneController.clear();
+      _additionalInfoController.clear();
+
+    } catch (e) {
+      print('Error creating pet tag: $e');
+      _showSnackBar("Failed to create pet profile. Please try again.", Colors.red);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/',
+            (route) => false, // This removes all previous routes
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentGradient = AppTheme.getDefaultGradient(context);
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
@@ -111,30 +426,663 @@ class _LinkTagScreenState extends State<LinkTagScreen>
           opacity: _fadeAnimation,
           child: SlideTransition(
             position: _slideAnimation,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Hero section with tag ID
-                  _buildHeroSection(context, currentGradient),
-                  const SizedBox(height: 32),
-
-                  // Tag ID display section
-                  _buildTagDisplaySection(context, currentGradient, isDark),
-                  const SizedBox(height: 32),
-
-                  // Pet information section
-                  _buildPetInformationSection(context, currentGradient, isDark),
-                  const SizedBox(height: 32),
-
-                  // Create pet button
-                  _buildCreatePetButton(context, currentGradient),
-                ],
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 600),
+                margin: const EdgeInsets.all(20),
+                child: AuthService.getCurrentUser() != null
+                    ? _buildTagLinkingView()
+                    : _buildAuthenticationView(),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAuthenticationView() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Hero section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32.0),
+            decoration: BoxDecoration(
+              gradient: currentGradient,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: currentGradient.colors.first.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.qr_code_2,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Link Your HollerTag",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Sign in to link tag ${widget.tagId} to your account",
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Sign in options
+          Container(
+            padding: const EdgeInsets.all(32.0),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                  Colors.grey[850]!.withValues(alpha: 0.95),
+                  Colors.grey[800]!.withValues(alpha: 0.95),
+                ]
+                    : [
+                  Colors.white.withValues(alpha: 0.95),
+                  Colors.grey[50]!.withValues(alpha: 0.95),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // Google Sign In Button
+                SizedBox(
+                  width: double.infinity,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: currentGradient,
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: currentGradient.colors.first.withValues(alpha: 0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : signInWithGoogle,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      child: _isLoading && !_showEmailForm
+                          ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                          : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.login,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            "Sign In with Google",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.black.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        "OR",
+                        style: TextStyle(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.6)
+                              : Colors.black.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.black.withValues(alpha: 0.2),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Email Sign In Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _toggleEmailForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: currentGradient.colors.first,
+                      side: BorderSide(
+                        color: currentGradient.colors.first,
+                        width: 2,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _showEmailForm ? Icons.visibility_off : Icons.email,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _showEmailForm ? "Hide Email Form" : "Sign In with Email",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Email form
+                _buildEmailForm(),
+
+                const SizedBox(height: 24),
+
+                // Status card
+                _buildStatusCard(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailForm() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: _showEmailForm
+          ? Container(
+        margin: const EdgeInsets.only(top: 24),
+        padding: const EdgeInsets.all(24.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+              Colors.grey[800]!.withValues(alpha: 0.95),
+              Colors.grey[700]!.withValues(alpha: 0.95),
+            ]
+                : [
+              Colors.white.withValues(alpha: 0.95),
+              Colors.grey[50]!.withValues(alpha: 0.95),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.1),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: currentGradient,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: currentGradient.colors.first.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      _isSignUp ? Icons.person_add : Icons.email,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _isSignUp ? "Create New Account" : "Sign In with Email",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _toggleEmailForm,
+                    icon: const Icon(Icons.close),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black.withValues(alpha: 0.6),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              if (_isSignUp) ...[
+                _buildAuthTextField(
+                  controller: _fullNameController,
+                  label: "Full Name",
+                  hint: "Enter your full name",
+                  icon: Icons.person_outlined,
+                  keyboardType: TextInputType.name,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Please enter your full name";
+                    }
+                    if (value.trim().length < 2) {
+                      return "Name must be at least 2 characters";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+              _buildAuthTextField(
+                controller: _emailController,
+                label: "Email Address",
+                hint: "Enter your email",
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please enter your email";
+                  }
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    return "Please enter a valid email";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildAuthTextField(
+                controller: _passwordController,
+                label: "Password",
+                hint: "Enter your password",
+                icon: Icons.lock_outlined,
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please enter your password";
+                  }
+                  if (value.length < 6) {
+                    return "Password must be at least 6 characters";
+                  }
+                  return null;
+                },
+              ),
+              if (_isSignUp) ...[
+                const SizedBox(height: 16),
+                _buildAuthTextField(
+                  controller: _confirmPasswordController,
+                  label: "Confirm Password",
+                  hint: "Confirm your password",
+                  icon: Icons.lock_outlined,
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Please confirm your password";
+                    }
+                    if (value != _passwordController.text) {
+                      return "Passwords do not match";
+                    }
+                    return null;
+                  },
+                ),
+              ],
+              const SizedBox(height: 24),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: currentGradient,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: currentGradient.colors.first.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : signInWithEmail,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                      : Text(
+                    _isSignUp ? "Create Account" : "Sign In",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (!_isSignUp) ...[
+                TextButton(
+                  onPressed: resetPassword,
+                  child: Text(
+                    "Forgot Password?",
+                    style: TextStyle(
+                      color: currentGradient.colors.first,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              TextButton(
+                onPressed: _toggleSignUpMode,
+                child: Text(
+                  _isSignUp
+                      ? "Already have an account? Sign In"
+                      : "Don't have an account? Sign Up",
+                  style: TextStyle(
+                    color: currentGradient.colors.first,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+          : const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildAuthTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        filled: true,
+        fillColor: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.02),
+        labelStyle: TextStyle(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.7)
+              : Colors.black.withValues(alpha: 0.6),
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        hintStyle: TextStyle(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.5)
+              : Colors.black.withValues(alpha: 0.4),
+          fontSize: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.2),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.1),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(
+            color: currentGradient.colors.first,
+            width: 2.0,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      ),
+      style: TextStyle(
+        color: isDark ? Colors.white : Colors.black87,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+    );
+  }
+
+  Widget _buildStatusCard() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isError = _status.contains("failed") || _status.contains("error") || _status.contains("Error");
+    final bool isSuccess = _status.contains("Successfully") || _status.contains("created");
+
+    Color cardColor;
+    Color iconColor;
+    IconData iconData;
+
+    if (isError) {
+      cardColor = Colors.red;
+      iconColor = Colors.red;
+      iconData = Icons.error_outline;
+    } else if (isSuccess) {
+      cardColor = Colors.green;
+      iconColor = Colors.green;
+      iconData = Icons.check_circle_outline;
+    } else {
+      cardColor = Colors.blue;
+      iconColor = Colors.blue;
+      iconData = Icons.info_outline;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: cardColor.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            iconData,
+            color: iconColor,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _status,
+              style: TextStyle(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.8)
+                    : Colors.black.withValues(alpha: 0.7),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagLinkingView() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentGradient = AppTheme.getDefaultGradient(context);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Hero section with tag ID
+          _buildHeroSection(context, currentGradient),
+          const SizedBox(height: 32),
+
+          // Tag ID display section
+          _buildTagDisplaySection(context, currentGradient, isDark),
+          const SizedBox(height: 32),
+
+          // Pet information section
+          _buildPetInformationSection(context, currentGradient, isDark),
+          const SizedBox(height: 32),
+
+          // Create pet button
+          _buildCreatePetButton(context, currentGradient),
+        ],
       ),
     );
   }
@@ -555,6 +1503,9 @@ class _LinkTagScreenState extends State<LinkTagScreen>
             keyboardType: keyboardType,
             maxLines: maxLines ?? 1,
             maxLength: maxLength,
+            onChanged: (value) {
+              setState(() {}); // Trigger rebuild for validation
+            },
             decoration: InputDecoration(
               hintText: hint,
               filled: true,
@@ -611,67 +1562,65 @@ class _LinkTagScreenState extends State<LinkTagScreen>
   }
 
   Widget _buildCreatePetButton(BuildContext context, LinearGradient currentGradient) {
-    return ValueListenableBuilder3<String, String, String>(
-      first: ValueNotifier(_nameController.text),
-      second: ValueNotifier(_phoneController.text),
-      third: ValueNotifier(_additionalInfoController.text),
-      builder: (context, name, phone, additionalInfo, child) {
-        final bool isFormValid = name.trim().isNotEmpty &&
-            phone.trim().isNotEmpty &&
-            additionalInfo.trim().isNotEmpty;
+    final bool isFormValid = _nameController.text.trim().isNotEmpty &&
+        _phoneController.text.trim().isNotEmpty &&
+        _additionalInfoController.text.trim().isNotEmpty;
 
-        return Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: isFormValid ? currentGradient : LinearGradient(
-              colors: [Colors.grey.withValues(alpha: 0.3), Colors.grey.withValues(alpha: 0.2)],
-            ),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: isFormValid ? currentGradient : LinearGradient(
+          colors: [Colors.grey.withValues(alpha: 0.3), Colors.grey.withValues(alpha: 0.2)],
+        ),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: isFormValid ? [
+          BoxShadow(
+            color: currentGradient.colors.first.withValues(alpha: 0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ] : [],
+      ),
+      child: ElevatedButton(
+        onPressed: (isFormValid && !_isLoading) ? createPetTag : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
-            boxShadow: isFormValid ? [
-              BoxShadow(
-                color: currentGradient.colors.first.withValues(alpha: 0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ] : [],
           ),
-          child: ElevatedButton(
-            onPressed: isFormValid ? () {
-              // TODO: Implement create pet functionality with widget.tagId
-              print('Creating pet profile for tag: ${widget.tagId}');
-              _showSnackBar("Pet profile created successfully!", Colors.green);
-            } : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+          height: 22,
+          width: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white,
+          ),
+        )
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.pets,
+              color: isFormValid ? Colors.white : Colors.grey,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Create Pet Profile',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isFormValid ? Colors.white : Colors.grey,
+                letterSpacing: 0.5,
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.pets,
-                  color: isFormValid ? Colors.white : Colors.grey,
-                  size: 22,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Create Pet Profile',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isFormValid ? Colors.white : Colors.grey,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 

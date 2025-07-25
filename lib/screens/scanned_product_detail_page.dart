@@ -29,13 +29,15 @@ class _ScannedProductDetailPageState extends State<ScannedProductDetailPage>
   late Animation<Offset> _slideAnimation;
 
   @override
-  void initState() {
+  void initState()  {
     super.initState();
     // Fetch the product data when the widget initializes
+
     _productData = FirebaseFirestore.instance
         .collection('tags')
         .doc(widget.productId)
         .get();
+
 
     // Initialize animation controllers
     _fadeController = AnimationController(

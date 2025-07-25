@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/elements/custom_button.dart';
 import 'package:myapp/elements/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:myapp/elements/image_carousel.dart';
 import 'package:myapp/screens/firebase_login.dart';
 import 'dart:math' as math;
-import 'package:myapp/screens/shopping.dart';
 import 'package:myapp/elements/my_app_bar.dart';
 import 'package:myapp/screens/product_page.dart'; // Your existing product (shopping) page
-import 'package:myapp/backend/product.dart';
 import 'package:myapp/qr_signup_page.dart';
 import 'package:myapp/screens/dashboard_page.dart';
-import 'package:myapp/backend/model_generation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:myapp/screens/link_page.dart';
 
 // NEW IMPORT for the page that displays scanned product details
 import 'package:myapp/screens/scanned_product_detail_page.dart'; // Create this file
@@ -51,6 +49,11 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  Future<bool> productExists(String id) async {
+    DocumentSnapshot pS = await FirebaseFirestore.instance.collection('tags').doc(id).get();
+    return pS.exists;
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -72,33 +75,43 @@ class _MyAppState extends State<MyApp> {
       },
 
 // Use onGenerateRoute for dynamic routes (like /tags/:tagId from QR scan)
-      onGenerateRoute: (settings) {
+      onGenerateRoute: (settings)  {
         final uri = Uri.parse(settings.name!);
         final pathSegments = uri.pathSegments;
 
 // Handle the /tags/:tagsId route for scanned QR codes
         if (pathSegments.length == 2 && pathSegments[0] == 'tags') {
           final productId = pathSegments[1];
-          return MaterialPageRoute(
-            builder: (context) => ScannedProductDetailPage(
-              productId: productId,
-            ),
-            settings: settings, // Important for browser history and back button
-          );
-        }
 
-// If no matching dynamic route is found, fall back to an error page or home
-// IMPORTANT: For production, you might want to return a dedicated 404 page
-// or redirect to a known route.
-        return MaterialPageRoute(
-          builder: (context) => const Scaffold(
-            body: Center(
-              child: Text('Error: Page not found. Check the URL.'),
-            ),
-          ),
-        );
+          Future<bool> pE = productExists(productId);
+
+          pE.then((bool exists){
+            if(exists){
+              return MaterialPageRoute(
+                builder: (context) => ScannedProductDetailPage(
+                  productId: productId,
+                ),
+                settings: settings, // Important for browser history and back button
+              );
+            } else{
+              return MaterialPageRoute(
+                builder: (context) => LinkTagScreen(toggleTheme: _toggleTheme, tagId: productId)
+              );
+            }
+          }).catchError((error){
+            print("Error: $error");
+            return MaterialPageRoute(
+              builder: (context) => const Scaffold(
+                body: Center(
+                  child: Text('Error: Page not found. Please contact us for help.'),
+                ),
+              ),
+            );
+          });
+        }
       },
     );
+
   }
 }
 
@@ -374,7 +387,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         onPressed: () {
                                           Navigator.push(context,
                                             MaterialPageRoute(
-                                                builder: (context) => const ScannedProductDetailPage(productId: "qXOsghS7Sx0uht6JcBby")
+                                                //builder: (context) => const ScannedProductDetailPage(productId: "qXOsghS7Sx0uht6JcBby")
+                                                builder: (context) => LinkTagScreen(toggleTheme: widget.toggleTheme, tagId: "splerggggg")
                                             ),
                                           );
                                           /*
